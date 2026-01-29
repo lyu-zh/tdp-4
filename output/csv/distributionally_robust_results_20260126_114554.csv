@@ -1,0 +1,8 @@
+InstanceName,NumUnits,NumRegions,RSD,r,gamma,Scenarios,UseD1,Delta1,Delta2,UseJointChance,UseExactMethod,UseImprovedModel,UseAssignmentDependent,AvgDistMethod,AvgDistMean,Runtime(s),Objective,OutOfSamplePerformance,SolveSuccess,StatusCode,CutIterations,FailureStage
+GG500-10-1.dat,500,10,0.125,0.5,0.4,1000,true,0.00,0.00,false,false,false,false,3,-1.0000,4.370,59144.2446,1.0000,true,-1,-1,0
+GG500-10-1.dat,500,10,0.125,0.5,0.4,1000,false,2.00,4.00,false,false,false,false,3,-1.0000,3.770,59144.2446,1.0000,true,-1,-1,0
+GG500-10-1.dat,500,10,0.125,0.5,0.3,1000,true,0.00,0.00,false,false,false,false,3,-1.0000,3.813,59144.2446,1.0000,true,-1,-1,0
+GG500-10-1.dat,500,10,0.125,0.5,0.3,1000,false,2.00,4.00,false,false,false,false,3,-1.0000,3.876,59444.1625,1.0000,true,-1,-1,0
+GG500-10-1.dat,500,10,0.125,0.5,0.2,1000,true,0.00,0.00,false,false,false,false,3,-1.0000,3.591,59144.2446,1.0000,true,-1,-1,0
+GG500-10-1.dat,500,10,0.125,0.5,0.2,1000,false,2.00,4.00,false,false,false,false,3,-1.0000,29.097,-1.0000,-1.0000,false,2,-1,2
+GG500-10-1.dat,500,10,0.125,0.5,0.1,1000,true,0.00,0.00,false,false,false,false,3,-1.0000,3.667,59144.2446,1.0000,true,-1,-1,0

@@ -1,0 +1,2 @@
+Instance,RSD,r,gamma,Scenarios,UseScenarioGeneration,Runtime(s),Objective,OutOfSamplePerformance
+./Instances/2DU120-05-11.dat,0.500,0.2,0.2,500,true,23004.254,8381.4445,0.7140

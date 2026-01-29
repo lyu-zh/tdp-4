@@ -1,0 +1,12 @@
+<component name="libraryTable">
+  <library name="TDP">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/gurobi.jar!/" />
+      <root url="jar://$PROJECT_DIR$/mosek.jar!/" />
+      <root url="jar://$PROJECT_DIR$/Jama-1.0.3.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../../Jama-1.0.3.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

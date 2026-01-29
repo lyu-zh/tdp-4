@@ -1,0 +1,1425 @@
+%% 
+%% Copyright 2007-2025 Elsevier Ltd
+%% 
+%% This file is part of the 'Elsarticle Bundle'.
+%% ---------------------------------------------
+%% 
+%% It may be distributed under the conditions of the LaTeX Project Public
+%% License, either version 1.3 of this license or (at your option) any
+%% later version.  The latest version of this license is in
+%%    http://www.latex-project.org/lppl.txt
+%% and version 1.3 or later is part of all distributions of LaTeX
+%% version 1999/12/01 or later.
+%% 
+%% The list of all files belonging to the 'Elsarticle Bundle' is
+%% given in the file `manifest.txt'.
+%% 
+%% Template article for Elsevier's document class `elsarticle'
+%% with harvard style bibliographic references
+
+\documentclass[preprint,12pt,authoryear]{elsarticle}
+
+%% Use the option review to obtain double line spacing
+%% \documentclass[authoryear,preprint,review,12pt]{elsarticle}
+
+%% Use the options 1p,twocolumn; 3p; 3p,twocolumn; 5p; or 5p,twocolumn
+%% for a journal layout:
+%% \documentclass[final,1p,times,authoryear]{elsarticle}
+%% \documentclass[final,1p,times,twocolumn,authoryear]{elsarticle}
+%% \documentclass[final,3p,times,authoryear]{elsarticle}
+%% \documentclass[final,3p,times,twocolumn,authoryear]{elsarticle}
+%% \documentclass[final,5p,times,authoryear]{elsarticle}
+%% \documentclass[final,5p,times,twocolumn,authoryear]{elsarticle}
+
+%% For including figures, graphicx.sty has been loaded in
+%% elsarticle.cls. If you prefer to use the old commands
+%% please give \usepackage{epsfig}
+
+%% The amssymb package provides various useful mathematical symbols
+\usepackage{amssymb}
+%% The amsmath package provides various useful equation environments.
+\usepackage{amsmath}
+\usepackage{float}
+\usepackage{longtable}
+\usepackage{booktabs}
+\usepackage{makecell} % 导言区添加
+\usepackage{graphicx} % 导言区添加
+\usepackage{pdflscape} % 用于横向页
+\usepackage{booktabs}
+\usepackage{geometry} % 用于控制页面布局和文本宽度
+% 设置文本宽度以控制每行字符数
+% 对于 12pt 字体，大约每厘米 2.5-3 个字符
+% 以下设置约为每行 80 个字符（文本宽度约 14cm）
+% 如需调整，修改 textwidth 值：
+% - 70 字符/行：textwidth=12cm
+% - 80 字符/行：textwidth=14cm（当前设置）
+% - 90 字符/行：textwidth=15.5cm
+% - 100 字符/行：textwidth=17cm
+% 设置文本宽度以控制每行字符数（不改变边距，保持 elsarticle 默认设置）
+\setlength{\textwidth}{14cm}  % 文本宽度，控制每行字符数
+% 或者使用以下方式（如果上面的方式不工作）：
+% \geometry{textwidth=14cm}
+%% The amsthm package provides extended theorem environments
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}{Lemma}
+\newtheorem{proposition}{Proposition}
+\newtheorem{remark}{Remark}
+
+
+%% The lineno packages adds line numbers. Start line numbering with
+%% \begin{linenumbers}, end it with \end{linenumbers}. Or switch it on
+%% for the whole article with \linenumbers.
+%% \usepackage{lineno}
+
+\journal{Nuclear Physics B}
+
+\begin{document}
+
+\begin{frontmatter}
+
+%% Title, authors and addresses
+
+%% use the tnoteref command within \title for footnotes;
+%% use the tnotetext command for theassociated footnote;
+%% use the fnref command within \author or \affiliation for footnotes;
+%% use the fntext command for theassociated footnote;
+%% use the corref command within \author for corresponding author footnotes;
+%% use the cortext command for theassociated footnote;
+%% use the ead command for the email address,
+%% and the form \ead[url] for the home page:
+%% \title{Title\tnoteref{label1}}
+%% \tnotetext[label1]{}
+%% \author{Name\corref{cor1}\fnref{label2}}
+%% \ead{email address}
+%% \ead[url]{home page}
+%% \fntext[label2]{}
+%% \cortext[cor1]{}
+%% \affiliation{organization={},
+%%            addressline={}, 
+%%            city={},
+%%            postcode={}, 
+%%            state={},
+%%            country={}}
+%% \fntext[label3]{}
+
+\title{} %% Article title
+
+%% use optional labels to link authors explicitly to addresses:
+%% \author[label1,label2]{}
+%% \affiliation[label1]{organization={},
+%%             addressline={},
+%%             city={},
+%%             postcode={},
+%%             state={},
+%%             country={}}
+%%
+%% \affiliation[label2]{organization={},
+%%             addressline={},
+%%             city={},
+%%             postcode={},
+%%             state={},
+%%             country={}}
+
+\author{} %% Author name
+
+%% Author affiliation
+\affiliation{organization={},%Department and Organization
+            addressline={}, 
+            city={},
+            postcode={}, 
+            state={},
+            country={}}
+
+%% Abstract
+\begin{abstract}
+%% Text of abstract
+Abstract text.
+\end{abstract}
+
+%%Graphical abstract
+\begin{graphicalabstract}
+%\includegraphics{grabs}
+\end{graphicalabstract}
+
+%%Research highlights
+\begin{highlights}
+\item Research highlight 1
+\item Research highlight 2
+\end{highlights}
+
+%% Keywords
+\begin{keyword}
+%% keywords here, in the form: keyword \sep keyword
+
+%% PACS codes here, in the form: \PACS code \sep code
+
+%% MSC codes here, in the form: \MSC code \sep code
+%% or \MSC[2008] code \sep code (2000 is the default)
+
+\end{keyword}
+
+\end{frontmatter}
+
+%% Add \usepackage{lineno} before \begin{document} and uncomment 
+%% following line to enable line numbers
+%% \linenumbers
+
+%% main text
+%%
+
+%% Use \section commands to start a section
+\section{Introduction}
+\label{sec1}
+%% Labels are used to cross-reference an item using \ref command.
+who are you?
+
+hahaha
+
+hehehe
+
+this is why we play
+
+yiyiyi
+
+\textbf{Since the partitioning results for last-mile delivery problems need to be stable and should not undergo significant changes, distributionally robust optimization (DRO) provides a more robust algorithmic framework for solving partitioning problems.} Driven by the continuous development of technology and the global economy, the logistics and distribution field is undergoing profound transformation and innovation. E-commerce platforms, in particular, are fundamentally reshaping traditional delivery pattern on a global scale. \textbf{According to data from the United Nations Conference on Trade and Development (UNCTAD),(CITATION)} the estimated value of global e-commerce transactions reached USD 5.8 trillion in 2023. The scale of online shopping worldwide continues to expand, \textbf{with a Statista report indicating that the number of global online shoppers exceeded 2.7 billion in 2024 and is predicted to continue growing in the coming years, CITATION}. The rise of e-commerce has generated massive parcel volumes. \textbf{The Pitney Bowes Parcel Shipping Index, CITATION} reported a record 175 billion parcels shipped globally in 2023, fully demonstrating the field's significant growth and vitality in recent years. Looking ahead, the momentum of e-commerce growth remains strong. Analysts from \textbf{eMarketer, CITATION} forecast that from 2024 to 2027, global retail e-commerce sales will maintain a compound annual growth rate (CAGR) of approximately 8.5\%. By 2027, the global market size is predicted to exceed USD 7.5 trillion. This sustained expansion is driven by the maturation of retail pattern, advancements in payment and logistics infrastructure, and a lasting shift in consumer behavior towards e-commerce.
+
+The rapid development of e-commerce has provided logistics and distribution enterprises with immense market opportunities. As online shopping demand surges, logistics networks face significant challenges, with the last-mile delivery the most critical procedure in the logistics network. Last-mile delivery refers to the final segment of transportation, moving goods from local distribution centers directly to the user's physical address. Its delivery pattern is primarily divided into two types: home delivery and self-pickup. 
+Home delivery mode mainly involves couriers directly delivering parcels to customers' homes and notifying them to collect the items via methods such as phone calls. The self-pickup mode refers to customers collecting their parcels themselves from pickup points or smart lockers. Pickup points can include convenience stores, post offices, or similar locations. Smart lockers are automated mailboxes that allow users to pick up and drop off parcels independently.
+Undoubtedly, last-mile delivery is exceedingly important within the entire logistics distribution process. It represents the most direct point of contact between customers and logistics enterprises, directly influencing their evaluation of service quality and efficiency.
+
+However, last-mile delivery faces numerous practical challenges. Firstly, controlling its costs is particularly difficult. Compared to long-haul transportation, last-mile delivery covers a wide geographical area with dispersed delivery points and unpredictable order volumes, requiring significant investment in planning distribution networks, recruiting and training couriers, and purchasing and maintaining transportation tools. According to an analysis by \textbf{Deloitte, CITATION}, the average global cost of last-mile logistics accounts for 41\% of the total delivery cost, which is a notably high proportion.
+Furthermore, last-mile delivery struggles with the complexity of route selection and the issue of uneven workload distribution among delivery personnel. Navigating the intricate urban road network makes rationally planning delivery routes a complex optimization problem. Due to limited delivery resources, some areas may experience severe shortages of couriers, leading to an inability to meet customer demand promptly.
+Consequently, controlling last-mile delivery costs, rationally allocating limited delivery resources, and formulating scientific route planning schemes are challenges that logistics companies urgently need to resolve.
+
+To enhance the efficiency and service quality of last-mile delivery, implementing refined area division management is an effective method. Area division management refers to the strategy of dividing the entire delivery area into smaller sub-areas for management, which plays a crucial role in improving efficiency and service quality.
+However, even after division, the daily delivery demand within each sub-area remains uncertain. For instance, due to factors such as holidays or weather, order volumes in a particular area may suddenly surge or decline. This demand uncertainty can lead to wastage of delivery resources and impact customer satisfaction.
+As people's life pace accelerates, order uncertainty is gradually increasing. Therefore, research on the "partitioned delivery problem under uncertain demand" holds significant theoretical value and practical importance for the following reasons: Firstly, in an uncertain demand environment, an appropriate division strategy can reduce demand fluctuations within each sub-area, thereby making resource allocation more rational. This not only improves delivery accuracy but also reduces unnecessary repeated deliveries, thus enhancing overall delivery efficiency . Secondly, a reasonable division strategy can help reduce road traffic congestion and lower pollution emissions, thereby supporting sustainable social development.
+
+Distributionally robust optimization (DRO) is a classical framework for handling uncertainty. It seeks a solution that performs robustly under all possible probability distributions when the true distribution is unknown. The core idea is that since the exact true distribution of random variables cannot be known precisely, one defines an ambiguity set of distributions that likely contains the true distribution and then optimizes the expected performance under the worst-case scenario within this set.
+Chance constraints require that decisions must ensure certain random constraints hold with a probability no less than a confidence level. This approach allows constraints to be violated with a certain probability, thereby achieving a trade-off between the feasibility and optimality of a solution.
+In recent years, Distributionally Robust Chance Constraints (DRCC) have attracted significant attention. DRCC combines the ideas of both approaches: it requires that the constraints be satisfied with a probability not less than the preset confidence level under the worst-case distribution within the distributional ambiguity set. This integration synthesizes the risk management capability offered by chance constraints and the distributional ambiguity handling advantage of distributionally robust optimization, ultimately yielding solutions that are \textbf{both optimal and robust}.
+To the best of our knowledge, this paper is the first to systematically introduce distributionally robust chance constraints into the delivery area division problem to address the challenges posed by demand uncertainty. We consider our work makes the following contributions:
+
+\begin{enumerate}[(1)]
+    \item This study proposes a constraint-generation-based iterative location-assignment heuristic algorithm that effectively addresses the computational challenges arising from the exponential growth of contiguity constraints in traditional distribution territory design problems.
+
+    \item Innovatively, chance-constrained programming theory is applied to the distribution territory design problem, formulating a stochastic programming model capable of adapting to demand uncertainty. Correspondingly, a scenario-selection-based location-assignment algorithm is proposed, which dynamically filters critical scenarios while ensuring computational efficiency, thereby avoiding the computational burden of processing all scenarios.
+
+    \item The study further innovates by introducing a distributionally robust chance-constrained optimization framework into the territory design problem, effectively tackling the challenge of incomplete information on demand distributions. By constructing an ambiguity set based on moment information and transforming the Distributionally Robust Individual Chance Constraint (DRICC) into a second-order cone optimization problem, more robust handling of uncertainty is achieved.
+
+    \item Addressing the more challenging form of Distributionally Robust Joint Chance Constraints (DRJCC), a transformation method based on the Bonferroni approximation is proposed. By decomposing the joint constraints into multiple individual constraints and scientifically allocating risk parameters, the method ensures model solvability while effectively controlling the conservatism introduced during the transformation process.
+
+    \item Through systematic parameter sensitivity analysis, the study reveals key factors influencing the solution effectiveness of the distribution territory design problem and their operational patterns. The findings indicate that in high demand uncertainty environments, appropriately relaxing capacity constraints and setting lower risk levels can significantly enhance model robustness, providing crucial guidance for practical applications.
+\end{enumerate}
+
+\textbf{The remainder of the paper is organized as follows.}
+
+\section{Literature review}
+
+\subsection{Territory Design / Districting}
+
+The \textbf{territory design problem (TDP)}, also known as \textbf{districting}, aims to group a set of small geographical entities (basic units, such as neighborhoods, communities, or customers) into larger regions (territories) according to specific criteria, while satisfying three core properties: \textbf{balance}, \textbf{compactness}, and \textbf{contiguity}.  
+
+\begin{itemize}
+    \item \textbf{Balance}: requires that the total activity measure (e.g., population, demand, or workload) across all territories be approximately equal;  
+    \item \textbf{Compactness}: reflects the geographical cohesion of the territory;  
+    \item \textbf{Contiguity}: ensures that each basic unit within a territory is spatially connected to the others.
+\end{itemize}
+
+Early studies focused primarily on exact mathematical formulations. \textbf{Hess et al. (1965)} first introduced a mixed-integer programming (MIP) model for political districting based on the \textit{p-median} formulation, ensuring compactness and balance but neglecting contiguity. Building on this, \textbf{Drexl and Haase (1999)} introduced contiguity constraints via neighborhood relations, though the number of constraints increased exponentially. To address this computational challenge, \textbf{Shirabe (2005)} proposed a network-flow-based formulation to ensure contiguity through flow conservation constraints. Subsequently, \textbf{Ríos-Mercado and López-Pérez (2012)} and \textbf{Salazar-Aguilar et al. (2011)} developed iterative \textbf{constraint generation} techniques to improve scalability.
+
+As the problem size expanded, researchers shifted toward heuristic and approximate methods. \textbf{Ríos-Mercado et al. (2009)} addressed multi-criteria balance via a greedy randomized adaptive search procedure (GRASP). \textbf{Salazar-Aguilar et al. (2011)} formulated a quadratic integer model solved by a branch-and-cut approach. \textbf{Jarrah and Bard (2012)} tackled large-scale parcel delivery problems using a hybrid of column generation and tabu search, effectively reducing the number of drivers required. \textbf{Lei et al. (2012, 2015)} incorporated stochastic customer locations and used the Beardwood–Halton–Hammersley theorem (BHH) to estimate routing costs, applying large neighborhood search (LNS/ALNS) algorithms to solve uncertain TDPs. \textbf{Carlsson (2012)} introduced a computational geometry-based approach, defining boundaries directly under probabilistic customer distributions. \textbf{Ríos-Mercado (2013)} proposed a multi-balance mixed-integer model for commercial distribution systems, solved via branch-and-cut with strong empirical results on large instances.
+
+Recent research has extended TDPs to \textbf{multi-objective} and \textbf{dynamic} environments. \textbf{Camacho-Vallejo et al. (2019)} modeled delivery regions with dual objectives: workload balance and customer delay minimization. \textbf{Banerjee et al. (2022)} proposed a continuous-approximation-based model that uses Voronoi partitions to generate delivery territories efficiently. \textbf{Sandoval et al. (2022)} incorporated customer satisfaction into a three-phase heuristic framework. \textbf{Diglio et al. (2020, 2021, 2023)} addressed stochastic demand through two-stage stochastic programming and chance-constrained formulations, ensuring feasibility and cost efficiency. \textbf{Carlsson et al. (2018, 2023)} integrated Wasserstein-distance-based \textbf{distributionally robust optimization (DRO)} into geometric partitioning under uncertain customer locations, offering theoretical performance guarantees.
+
+\textbf{In summary}, the evolution of territory design research reflects a transition from \textbf{exact mathematical formulations} (focusing on compactness and contiguity), to \textbf{heuristic scalability improvements}, and more recently, to \textbf{uncertainty-aware modeling} that incorporates stochastic and robust considerations. The emerging trend emphasizes integrating stochasticity, dynamics, and robustness to enhance practical applicability and decision reliability.
+
+\subsection{Chance-Constrained and Distributionally Robust Chance-Constrained Optimization}
+
+\textbf{Chance-constrained programming (CCP)}, first proposed by \textbf{Charnes and Cooper (1959)}, addresses optimization problems involving random constraints. Its goal is to ensure that constraints are satisfied with a specified confidence level \(1 - \alpha\). The general formulation is:
+
+\[
+\min_{x \in X} g(x)
+\quad \text{s.t.} \quad P\{f(x, \xi) \le 0\} \ge 1 - \alpha.
+\]
+
+CCP provides a trade-off between performance and risk tolerance. \textbf{Shapiro et al. (2006, 2007)} developed convex approximations based on the \textbf{Sample Average Approximation (SAA)} and \textbf{Conditional Value-at-Risk (CVaR)} to make CCP computationally tractable. \textbf{Nemirovski (2012)} further proposed Bernstein-type and second-order cone relaxations, while \textbf{Garatti et al. (2011)} introduced a \textbf{sampling-and-discarding} approach that improved efficiency without compromising feasibility.
+
+However, CCP assumes that the underlying probability distribution is known or can be well-approximated by empirical samples—an assumption often violated in real-world applications, leading to poor out-of-sample performance. To overcome this limitation, \textbf{Distributionally Robust Chance Constraints (DRCC)} were developed. Instead of relying on a fixed distribution, DRCC defines an \textbf{ambiguity set} \(\mathcal{P}\) that contains all plausible distributions consistent with partial information (e.g., mean, covariance, or Wasserstein distance from empirical data). The DRCC formulation ensures constraint feasibility under the worst-case distribution within the ambiguity set:
+
+\[
+\min_{x \in X} g(x)
+\quad \text{s.t.} \quad 
+\inf_{P \in \mathcal{P}} P\{f(x, \xi) \le 0\} \ge 1 - \alpha,
+\]
+where \(\mathcal{P}\) denotes the ambiguity set to which the true distribution belongs.
+
+Recent studies have applied DRCC to a range of decision-making problems. \textbf{Ghosal and Wiesemann (2020)} addressed a DRCC-based capacitated vehicle routing problem (CVRP) using moment-based ambiguity sets and a cutting-plane algorithm. \textbf{Arrigo et al. (2022)} proposed three reformulations for DRCC in energy dispatch: linear, MILP, and quadratic forms under Wasserstein distance. \textbf{Chen et al. (2022)} derived tractable reformulations for both independent and joint chance constraints under the Wasserstein metric. \textbf{Wang et al. (2022)} applied DRCC to task assignment, improving out-of-sample feasibility through ambiguity-set optimization. \textbf{Zhao et al. (2022, 2023)} studied DRCC in ship scheduling and p-hub problems, employing sequential convex optimization and constraint generation. \textbf{Ho-Nguyen et al. (2023)} strengthened MIP reformulations using quantile-based cuts, significantly reducing big-M parameters. \textbf{Shiraz et al. (2023)} developed a \textbf{Benders decomposition} framework for large-scale DRCC, achieving order-of-magnitude computational improvements. Finally, \textbf{Carlsson et al. (2018, 2023)} combined DRO and Wasserstein metrics in partitioning problems, providing a theoretical foundation for robust geometric districting under uncertainty.
+
+Overall, DRCC provides a powerful framework that ensures \textbf{probabilistic robustness} without requiring exact distributional knowledge. By leveraging ambiguity set, CVaR approximations, and decomposition-based solution methods, DRCC achieves scalable and reliable performance across complex stochastic systems.
+
+\subsection{Research Gap and Contribution}
+
+Existing studies demonstrate that the \textbf{TDP} has evolved from deterministic and geometric formulations to uncertainty-aware frameworks. Classical models primarily focused on contiguity and compactness constraints or heuristic methods in logistics and service applications, while recent developments in \textbf{chance-constrained} and \textbf{distributionally robust optimization} offer new tools to handle randomness and variability.
+
+However, there remains a \textbf{significant research gap} in integrating \textbf{DRCC formulations} into the \textbf{TDP}. Most stochastic districting models rely on fixed distributions or scenario-based approximations, providing limited control over demand overloads or balance violations. CCP-based methods assume known distributions, while DRCC—though capable of handling distributional ambiguity—has rarely been combined with spatial partitioning frameworks.
+
+\textbf{This thesis bridges this gap} by introducing a \textbf{distributionally robust chance-constrained territory design model}, built upon the classical \textbf{location-allocation structure} with explicit contiguity constraints. The proposed model incorporates scenario approximation, moment-based ambiguity sets, and conic reformulations, and is solved via an efficient decomposition and approximation algorithm. This research not only fills a methodological void in applying DRCC to districting problems but also provides a robust and computationally tractable framework for \textbf{territory design under uncertain demand}.
+
+
+\section{Deterministic Model for the Territory Design Problem}
+
+This section presents the deterministic modeling process of the Territory Design Problem (TDP), including the problem description, notation definitions, mathematical formulation, and solution algorithm. 
+The deterministic model serves as the foundation for the subsequent Distributionally Robust Chance-Constrained Territory Design Problem (DRCC-TDP), and is therefore elaborated systematically and rigorously.
+
+\subsection{Problem Description}
+
+\subsubsection{Fundamental Components}
+
+The core of the Territory Design Problem (TDP) is to group a number of basic units into several districts. The main components are as follows:
+
+\begin{itemize}
+    \item \textbf{Basic Units:} Represent the smallest indivisible geographic entities, such as customer locations, streets, or communities. Each unit is represented by its coordinates, and the distances between units are used as cost measures in the optimization process.
+
+    \item \textbf{Activity Measures:} Quantitative indicators reflecting the characteristics of each basic unit, such as order demand, population, or workload. These measures serve as the basis for balance constraints. For instance, order quantities are relevant in logistics applications, whereas population counts are key in political districting.
+
+    \item \textbf{Districts:} Each district consists of several basic units. The total activity measure of a district is the sum of its internal units’ activity measures.
+
+    \item \textbf{District Centers:} Represent key reference units within each district, typically defined as the unit minimizing the total distance to all other units in the district, and thus located near the geographic center.
+\end{itemize}
+
+During territory design, several criteria must typically be satisfied: assignment completeness, balance, compactness, and contiguity.
+
+\begin{enumerate}
+    \item \textbf{Assignment Completeness and Exclusivity:} 
+    Each basic unit must be assigned to exactly one district, ensuring that the union of all districts covers the entire set of basic units and that no overlaps occur. This ensures logical consistency and full spatial coverage.
+
+    \item \textbf{Balance:} 
+    Balance ensures that districts have comparable total activity measures, such as workload or demand. In logistics settings, this prevents overburdening certain delivery areas, while in political districting, it ensures fair representation. Although specific balance criteria vary with the chosen activity measure, the underlying objective remains the same—avoiding excessive disparities across districts.
+
+    \item \textbf{Compactness:} 
+    Compactness measures the regularity and concentration of a district’s shape. Ideally, districts should be approximately circular or square, avoiding irregular, fragmented, or elongated shapes. Compact districts minimize intra-district travel distances, improving operational efficiency.
+
+    \item \textbf{Contiguity:} 
+    Contiguity requires that all basic units within a district form a single connected component, i.e., any two units within the same district can reach each other without leaving the district.
+    
+    Two basic units are directly connected if they share a common boundary, and indirectly connected if a path exists through other units in the same district. 
+    Contiguity is essential in practice—for example, in logistics or sales management—to ensure route feasibility and organizational coherence. However, it is not always a mandatory requirement and depends on the specific application context.
+\end{enumerate}
+
+\subsection{Notation}
+
+Let the entire service area be denoted by \( G = (N, E) \), where \( N \) is the set of basic units, and \( E \) is the set of edges representing adjacency relationships. 
+If two basic units \( i \) and \( j \) share a common boundary, then \( (i,j) \in E \). 
+Let \( N_i \) denote the set of basic units adjacent to unit \( i \), i.e., \( N_i = \{ j \in N : (i,j) \in E \} \).
+
+Additional notation is defined as follows:
+\[
+\begin{aligned}
+c_{ij} & : \text{travel cost (or distance) between basic units } i \text{ and } j, \\
+p & : \text{number of districts to be created}, \\
+U & : \text{maximum allowable total activity measure per district}, \\
+d_i & : \text{activity measure (e.g., demand) of basic unit } i, \\
+D & = \sum_{i \in N} d_i : \text{total activity measure of all basic units}, \\
+|S| & : \text{cardinality of set } S.
+\end{aligned}
+\]
+
+\subsection{Model Formulation}
+
+Define the binary decision variable:
+\[
+x_{ij} =
+\begin{cases}
+1, & \text{if basic unit } i \text{ is assigned to the district centered at } j, \\
+0, & \text{otherwise.}
+\end{cases}
+\]
+
+The deterministic territory design model is formulated as follows:
+\begin{align}
+\min \quad & \sum_{i\in N}\sum_{j\in N} c_{ij}x_{ij} \label{eq:det_obj} \\
+\text{s.t.} \quad & \sum_{j\in N} x_{ij} = 1, && \forall i\in N \label{eq:det_assign} \\
+& \sum_{j\in N} x_{jj} = p, \label{eq:det_districts} \\
+& \sum_{i\in N} d_i x_{ij} \le U, && \forall j\in N \label{eq:det_capacity} \\
+& \sum_{i\in \cup_{v\in S}(N_v\setminus S)} x_{ij} - \sum_{i\in S} x_{ij} \ge 1 - |S|, && \forall j\in N, S \subset [N \setminus (N_j \cup \{j\})] \label{eq:det_contiguity} \\
+& x_{ij} \in \{0,1\}, && \forall i,j \in N \label{eq:det_binary}
+\end{align}
+
+The objective function minimizes total distance from each basic unit to its assigned district center, optimizing compactness. 
+Constraint \eqref{eq:det_assign} ensures each unit is assigned to exactly one district. 
+Constraint \eqref{eq:det_districts} enforces the creation of \(p\) districts. 
+Constraint \eqref{eq:det_capacity} imposes upper bounds on district activity measures, ensuring balance. 
+Constraint \eqref{eq:det_contiguity} ensures territorial contiguity via adjacency-based subset inequalities. For each district centered at unit~$j$, if all units in a subset~$S$ (excluding~$j$ and its neighbors) are assigned to~$j$, at least one unit adjacent to~$S$ but outside it must also be assigned to~$j$. Since each subset~$S$ yields one constraint, their number grows exponentially with problem size, making computation difficult. 
+Constraint \eqref{eq:det_binary} defines binary decision variables.
+
+\subsection{Iterative Location–Allocation Algorithm Based on Constraint Generation}
+\label{3.4}
+
+Existing research indicates that even without contiguity constraints, the TDP is NP-Hard. 
+The inclusion of exponentially many contiguity constraints greatly increases complexity. 
+For large-scale instances, explicitly enumerating all contiguity constraints is infeasible. 
+Hence, a constraint generation approach is typically adopted.
+
+To improve computational efficiency, this section proposes a heuristic algorithm integrated with a solver, referred to as the \textit{Iterative Location–Allocation Algorithm Based on Constraint Generation}. 
+This method can efficiently handle deterministic territory design problems and provides benchmark for comparison with the robust model.
+
+The algorithm consists of two main stages—location selection and unit allocation—which are iteratively optimized. The detailed procedure is as follows:
+
+\paragraph{Step 1: Construct Initial Set of District Centers}
+
+To ensure balance, contiguity, and a minimized objective, district centers should be spatially well-dispersed. A greedy randomized search is applied to select \( p \) centers. Let \( C \) denote the set of currently selected centers. First, one unit is randomly chosen as the initial center and added to \( C \). For each unselected unit \( j \in N \setminus C \), compute its minimum distance to existing centers:
+\[
+Dist_j = \min_{i \in C} c_{ij}
+\]
+Then, define a distance threshold as
+\[
+ThresholdValue = Dist_{\max} - \tau (Dist_{\max} - Dist_{\min}), \quad \tau \in (0,1)
+\]
+Units satisfying \( Dist_j \ge ThresholdValue \) constitute a candidate list, from which one unit is randomly chosen as the next center. This process is repeated until \( p \) centers are selected.
+
+
+\paragraph{Step 2: Assignment of Basic Units}
+
+Given the selected centers \( C \), we solve the following relaxed model which ignores contiguity constraints:
+\begin{align}
+\min \quad & \sum_{i\in N}\sum_{j\in C} c_{ij}x_{ij} \\
+\text{s.t.} \quad & \sum_{j\in C} x_{ij} = 1, && \forall i\in N\setminus C, \\
+& \sum_{i\in N} d_i x_{ij} \le U, && \forall j\in C, \\
+& x_{jj} = 1, && \forall j\in C, \\
+& x_{ij} \in \{0,1\}.
+\end{align}
+
+In this formulation, each non-center unit \( i \in N \setminus C \) is assigned to exactly one of the preselected centers \( j \in C \), while each center must serve itself (\(x_{jj}=1\)). By fixing the set of potential centers to \( C \), the number of binary decision variables is reduced from \( n^2 \) (all possible assignments between any two units) to \( n \times p \) (assignments only to the selected centers). This reduction decreases model complexity and allows efficient solution via standard MIP solvers.
+
+\paragraph{Step 3: Adjust District Centers}
+
+After solving the relaxed model, each district’s composition is known. 
+However, the preselected centers may not be optimal. 
+For each district, compute the sum of distances from every unit to all others, and redefine the center as the unit minimizing this sum. 
+If any centers are updated, set \(C = R\) as the new set of centers and repeat Step 2. 
+Iterate until centers remain unchanged.
+
+\paragraph{Step 4: Check and Enforce Contiguity}
+
+After obtaining an initial assignment of basic units to districts, the contiguity of each district is checked using Breadth-First Search (BFS). For each district centered at \(j \in C\), BFS explores all units assigned to that district to identify connected components. 
+
+If BFS detects multiple disconnected components within a district, this indicates a violation of the contiguity requirement. To correct this, additional contiguity constraints of the form
+\begin{equation}
+\sum_{i \in \cup_{v \in S} (N_v \setminus S)} x_{ij} - \sum_{i \in S} x_{ij} \ge 1 - |S|, 
+\quad \forall S \subset [N \setminus (N_j \cup \{j\})]
+\end{equation}
+are generated specifically for the violating subset \(S\) and added to the assignment model from Step 2. The model is then re-optimized with these new constraints. 
+
+After reoptimization, the connectivity of all districts is checked again. This iterative process continues until no district contains disconnected components, ensuring that every district forms a single connected region. By adding only the violated constraints in each iteration, the algorithm avoids introducing the full exponential set of possible contiguity constraints, thereby maintaining computational efficiency.
+
+% Overall, this iterative procedure decomposes the original large-scale problem into two manageable subproblems—district center selection and unit assignment—solved iteratively. The combination of location refinement, allocation optimization, and constraint generation improves both solution quality and computational tractability, producing connected, balanced, and compact districts efficiently.
+
+\subsection{Summary}
+
+This section systematically introduced the components and modeling framework of the deterministic territory design problem, established a compact mixed-integer programming model centered on district centers, and proposed an Iterative Location–Allocation Algorithm Based on Constraint Generation. 
+The algorithm’s iterative mechanism—comprising center selection, allocation optimization, center adjustment, and contiguity correction—achieves a balance between compactness and workload equity while efficiently handling the exponential nature of contiguity constraints. 
+This lays a solid theoretical and computational foundation for the development of the subsequent distributionally robust chance-constrained model.
+
+\section{Chance-Constrained Territory Design Problem}
+
+In this section, we consider the territory design problem under uncertain demand. To model this uncertainty, we employ a chance-constrained approach, which does not require strict satisfaction of constraints but ensures that a constraint is satisfied with a probability exceeding a prescribed threshold. Furthermore, since the exact distribution of demand is typically unknown and only historical data are available, we adopt a distributionally robust chance-constrained formulation to model the demand constraints. Different forms of the model are presented depending on the available distributional information, along with their tractable reformulations.
+
+\subsection{Chance-Constrained Territory Design Model}
+
+Let the decision variables and notation be as in Section 2.2. The chance-constrained model for territory design can be formulated as:
+
+\begin{align}
+\min \quad & \sum_{i\in N}\sum_{j\in N} c_{ij} x_{ij} \label{eq:cc_obj} \\
+\text{s.t.} \quad & \sum_{j\in N} x_{ij} = 1, && \forall i \in N \label{eq:cc_assign} \\
+& \sum_{j\in N} x_{jj} = p \label{eq:cc_districts} \\
+& \mathbb{P}\Bigg\{\sum_{i\in N} \widetilde{d}_i x_{ij} \le U, \ \forall j \in N \Bigg\} \ge 1-\gamma \label{eq:cc_joint} \\
+& \sum_{i\in \cup_{v\in S} (N_v \setminus S)} x_{ij} - \sum_{i\in S} x_{ij} \ge 1 - |S|, && \forall j \in N, S \subset [N \setminus (N_j \cup \{j\})] \label{eq:cc_connectivity} \\
+& x_{ij} \in \{0,1\}, && \forall i,j \in N \label{eq:cc_binary}
+\end{align}
+
+Here, $\widetilde{d}_i$ denotes the stochastic demand of basic unit $i$. Compared with the deterministic model in Section 2.3, only the demand-related constraint is modified. Constraint \eqref{eq:cc_connectivity} ensures contiguity, while constraint \eqref{eq:cc_joint} replaces the deterministic demand upper bound with a probabilistic requirement: for any district, the total demand does not exceed the capacity $U$ with probability at least $1-\gamma$.
+
+Although chance-constrained models better accommodate demand uncertainty than deterministic models, the probabilistic constraint is generally not directly tractable. Common reformulation approaches include:
+
+\begin{enumerate}
+    \item If the random variables follow a specific distribution, e.g., Gaussian, the chance constraint can be equivalently reformulated as a second-order cone constraint, which is directly solvable.
+    \item In practice, the full probability distribution is often unknown, and only historical samples or realized scenarios are available. Scenario-based approximations replace the chance constraint with a set of linear inequalities, rendering the model tractable. However, this may lead to the so-called ``optimization curse,'' where solutions perform well on training samples but poorly out-of-sample.
+    \item To mitigate this issue, distributionally robust chance constraints (DRCC) consider a family of plausible distributions. The model ensures that even the worst-case distribution within this set satisfies the chance constraint, providing probabilistic guarantees for the true unknown distribution. The main differences among DRCC formulations arise from the choice of the ambiguity set, which can be based on moment information or distances between distributions, leading to different reformulations and solution methods.
+\end{enumerate}
+
+Additionally, chance constraints can be classified as \emph{individual} or \emph{joint}, depending on whether constraints must simultaneously hold across multiple districts. Constraint \eqref{eq:cc_joint} represents a joint chance constraint, requiring that all districts simultaneously satisfy the demand-capacity constraint with probability at least $1-\gamma$. In contrast, one may consider $N$ individual chance constraints of the form:
+
+\begin{equation}
+\mathbb{P}\Big\{\sum_{i\in N} \widetilde{d}_i x_{ij} \le U \Big\} \ge 1-\gamma, \quad \forall j \in N \label{eq:cc_individual}
+\end{equation}
+
+Here, each district independently satisfies its capacity constraint with the required probability. Reformulating joint chance constraints is generally more complex than individual ones, and in practice, approximation techniques are often used to convert joint constraints into individual constraints before transforming them into deterministic equivalents for optimization.
+
+\subsection{Scenario-Based Reformulation and Solution Method}
+\subsubsection{Model Reformulation}
+
+In this subsection, we present the deterministic reformulation of the chance-constrained model under a scenario-based approximation. Suppose that the uncertainty in demand can be represented by a finite set of discrete scenarios, denoted by $\Omega$. For each scenario $\omega \in \Omega$, let its occurrence probability be $\pi_\omega$, where $\sum_{\omega\in\Omega} \pi_\omega = 1$. In scenario $\omega$, the realization of the random demand variable is given by
+\begin{equation*}
+\boldsymbol{d}_\omega = [d_{1\omega}, d_{2\omega}, \ldots, d_{N\omega}]^\top, \quad \forall \omega \in \Omega,
+\end{equation*}
+that is, $d_{i\omega}$ represents the demand of basic unit $i$ under scenario $\omega$. 
+
+We introduce an auxiliary binary variable $z_\omega$, where $z_\omega = 1$ if the capacity constraint is violated under scenario $\omega$, i.e., there exists at least one district whose total demand exceeds the capacity limit $U$; otherwise, $z_\omega = 0$. The chance-constrained model can thus be reformulated as the following deterministic mixed-integer program:
+
+\begin{align}
+\min \quad & \sum_{i\in N}\sum_{j\in N} c_{ij} x_{ij} \label{eq:scen_obj} \\
+\text{s.t.} \quad & \sum_{j\in N} x_{ij} = 1, && \forall i\in N, \label{eq:scen_assign} \\
+& \sum_{j\in N} x_{jj} = p, \label{eq:scen_centers} \\
+& \sum_{i\in N} d_{i\omega} x_{ij} \le U + M z_\omega, && \forall j\in N, \omega\in\Omega, \label{eq:scen_capacity} \\
+& \sum_{\omega\in\Omega} \pi_\omega z_\omega \le \gamma, \label{eq:scen_prob} \\
+& \sum_{i\in \cup_{v\in S}(N_v \setminus S)} x_{ij} - \sum_{i\in S} x_{ij} \ge 1 - |S|, && \forall j \in N, S \subset [N \setminus (N_j \cup \{j\})], \label{eq:scen_connectivity} \\
+& x_{ij} \in \{0,1\}, && \forall i,j \in N, \label{eq:scen_xbinary} \\
+& z_\omega \in \{0,1\}, && \forall \omega \in \Omega. \label{eq:scen_zbinary}
+\end{align}
+
+Here, $M$ in constraint \eqref{eq:scen_capacity} denotes a sufficiently large constant. For a particular scenario $\omega$, if at least one district violates the capacity constraint, $z_\omega = 1$ relaxes the corresponding constraint. Constraint \eqref{eq:scen_prob} ensures that the total probability of violating scenarios does not exceed $\gamma$, which means that the solution satisfies the capacity constraint with probability at least $1 - \gamma$.
+
+In practical applications, the number of scenarios $|\Omega|$ can be extremely large, especially when random variables follow continuous distributions, making $\Omega$ theoretically infinite. Moreover, it is often difficult to accurately estimate the exact probability of each scenario. To address this issue, inspired by the concept of empirical distributions, we assume equal probability for all scenarios, i.e., $\pi_\omega = \frac{1}{|\Omega|}$. In this case, constraint \eqref{eq:scen_prob} can be equivalently rewritten as
+\begin{equation}
+\sum_{\omega\in\Omega} z_\omega \le \lfloor \gamma |\Omega| \rfloor. \label{eq:scen_count}
+\end{equation}
+
+This constraint ensures that the number of violating scenarios does not exceed $\lfloor \gamma |\Omega| \rfloor$, thereby guaranteeing that the chance constraint is satisfied with probability at least $1 - \gamma$.
+
+The final deterministic model under scenario approximation aims to minimize objective function \eqref{eq:scen_obj}, subject to constraints \eqref{eq:scen_assign}--\eqref{eq:scen_connectivity} and \eqref{eq:scen_xbinary}--\eqref{eq:scen_zbinary}.
+
+\subsubsection{Scenario-Based Location–Allocation Algorithm}
+
+Next, we propose an algorithm to efficiently solve the above model. Although the deterministic reformulation is exact, it remains an NP-hard problem, with the number of constraints and decision variables growing rapidly as $|\Omega|$ increases. Therefore, based on the iterative location–allocation strategy introduced in \textbf{Section~2.4}, we develop an enhanced heuristic algorithm incorporating capacity constraint generation. The core concept is as follows.
+
+Similar to \textbf{Section~2.4}, we first select a set of potential centers, and then solve a relaxed allocation problem based on these centers. The intuition behind this is that, among all basic units, those located at the boundaries of the region are unlikely to become true centers. If a corner vertex were selected as a center, the total travel distance within its assigned district would likely be higher compared to selecting an interior unit as the center. Thus, by pre-selecting a reasonable subset of $p$ candidate centers, we reduce the decision space from $n^2$ to $n \times p$ variables. Moreover, the number of capacity constraints in \eqref{eq:scen_capacity} also decreases from $n \times |\Omega|$ to $p \times |\Omega|$, substantially improving computational efficiency.
+
+Furthermore, when $|\Omega|$ is large, even with this reduction, the number of constraints can remain high. However, in many cases, a feasible solution satisfying one scenario also satisfies several others. Since checking constraint satisfaction under a given scenario is computationally cheaper than including it explicitly in the optimization model, we adopt a \emph{constraint generation} strategy to iteratively add only violated capacity constraints. 
+
+The proposed algorithm proceeds as follows:
+
+\textbf{Step 1 — Construct Initial Set of Centers.}  
+As described above, fixing district centers can significantly reduce model complexity. The first step is to construct a set $C$ of potential centers. When there is only one scenario, the problem reduces to the deterministic model in \textbf{Section~2.3}. However, since multiple scenarios exist here, we specify a parameter $\text{InitialNum} > 0$ and randomly draw distinct scenarios from $\Omega$. For each selected scenario $\omega$, we apply the algorithm from \textbf{Section~2.4} to solve the deterministic model corresponding to that scenario, obtaining its set of centers $C_\omega$. To ensure computational efficiency, we impose a local time limit $\text{localTimeLimit}$ for each run. If the solution satisfies the capacity constraint, we record it; otherwise, we skip that scenario. This process is repeated until $\text{InitialNum}$ valid solutions are obtained. We then rank all centers by frequency of occurrence across scenarios and select the $p$ most frequent ones to form $C$. Note that scenarios may also be selected according to predefined criteria rather than purely at random, which could influence solution quality.
+
+\textbf{Step 2 — Generate Initial Feasible Solution.}  
+In this step, we generate an initial feasible solution satisfying all constraints. We adopt a capacity-driven heuristic as follows: randomly select a small subset of $m$ scenarios ($m \ll |\Omega|$, e.g., $m=1$ or $2$), and construct a submodel enforcing demand-capacity constraints for these scenarios, along with contiguity and fixed-center constraints $x_{jj}=1, j\in C$. The resulting solution is then used to update centers in $C$ through an adjustment technique described in Step 3 of \textbf{Section \ref{3.4}}. Next, we check feasibility of this solution across all scenarios and identify the subset of feasible scenarios $\Omega_f$. If $|\Omega_f| \ge \lceil (1-\gamma)|\Omega| \rceil$, a feasible chance-constrained solution has been obtained. Otherwise, we randomly select $q$ additional scenarios ($q \ll |\Omega|$, e.g., $q=1$ or $2$) from $\Omega \setminus \Omega_f$ and add their corresponding capacity constraints to the submodel, reoptimizing to obtain an updated feasible set $\Omega_f'$. We set $\Omega_f = \Omega_f'$ and repeat until $|\Omega_f| \ge \lceil (1-\gamma)|\Omega| \rceil$. It should be noted that when a new demand constraint corresponding to a newly added scenario is incorporated into the subproblem, the obtained solution generally remains feasible for a larger set of scenarios, i.e.,
+$
+|\Omega_f'| \geq |\Omega_f|.
+$
+However, when certain scenarios exhibit extreme values, the new solution generated to satisfy such constraints may lead to a smaller feasible scenario set, that is,
+$|\Omega_f'| < |\Omega_f|.$
+To handle this situation, when extracting scenarios and adding their corresponding demand constraints, such extreme scenarios can be excluded from consideration. Only when no other scenarios remain available for extraction should these extreme scenarios be taken into account.
+
+
+If no feasible solution is found after Step~2, we conclude that the scenario-based model may itself be infeasible.
+
+\textbf{Step 3 — Improve Initial Solution.}  
+Since Step~2 fixes centers during optimization, we further refine the solution by iteratively adjusting centers. After each adjustment, we resolve the submodel containing only the active capacity constraints from Step~2. Although this improves efficiency, it may cause temporary infeasibility if an updated center disrupts prior feasibility. Therefore, each feasible solution with $|\Omega_f|\ge\lceil(1-\gamma)|\Omega|\rceil$ should be recorded, and after convergence, the best feasible solution encountered is selected as the final result.
+
+Overall, the proposed heuristic algorithm provides an efficient and scalable approach for solving the scenario-based deterministic model. While exact solvers can directly tackle the model, they become computationally prohibitive when $|\Omega|$ is large. The heuristic algorithm, by contrast, achieves high-quality feasible solutions within reasonable computation time, offering significant practical advantages for real-world applications.
+
+\begin{remark}
+This section proposes an individual chance-constrained districting model , which incorporates probabilistic capacity constraints to better reflect real-world logistics scenarios. To address the difficulty of directly solving the model, a scenario-based reformulation method is developed, converting probabilistic constraints into deterministic ones via auxiliary variables, along with a scenario-selection based location–allocation algorithm for efficient solution.
+\end{remark}
+
+\section{Distributionally Robust Chance-Constrained Model}
+\label{sec:dricc}
+
+The scenario-based approximation model described above fully exploits the historical data of random variables. Its underlying assumption is that the distribution of the random variable is known, that is, the empirical distribution is used to represent the true distribution. However, in practice, it is difficult to guarantee that the empirical distribution can accurately capture the true distribution, especially when the sample size is limited. As a result, when new samples emerge, the solution derived from existing data may fail to satisfy the corresponding constraints induced by these new observations. In other words, the out-of-sample performance of the scenario-based model cannot be guaranteed, which may lead to unsatisfactory or even infeasible results. To address this issue, we adopt the concept of \textit{Distributionally Robust Optimization} (DRO) to model the chance constraints.
+
+The distributionally robust chance-constrained (DRCC) framework does not assume full knowledge of the true distribution, nor does it rely solely on the empirical distribution. Instead, it constructs an \textit{ambiguity set} of distributions based on historical data, within which the true distribution is expected to lie with high probability. By enforcing that the worst-case distribution within this ambiguity set satisfies the chance constraints, we ensure that the true distribution also satisfies them. Consequently, the DRCC approach typically exhibits stronger out-of-sample performance compared to scenario-based methods.
+
+Different methods exist for constructing the ambiguity set, depending on which characteristics of the distribution are utilized. Common approaches include the \textit{moment-based} ambiguity set and the \textit{distance-based} ambiguity set. The moment-based approach leverages the fact that, while we cannot fully characterize the true distribution, we can accurately estimate its first and second moments (e.g., mean and covariance) from historical data. Thus, an ambiguity set can be constructed to include all distributions sharing these estimated moments. The statistical distance-based approach, on the other hand, recognizes that the empirical distribution, though not identical to the true one, is generated from it and thus close in distributional distance. By defining a neighborhood around the empirical distribution using a statistical distance (e.g., divergence or Wasserstein metric), one can form an ambiguity set within which the true distribution is likely to reside. Recent research has shown a growing preference for Wasserstein-based ambiguity sets due to their favorable robustness properties.
+
+The distributionally robust individual chance-constrained (DRICC) model for the districting problem can thus be formulated as follows:
+\begin{align}
+\min_{x_{ij}} \quad & \sum_{i \in N} \sum_{j \in N} c_{ij} x_{ij} \label{eq:dricc_obj} \\
+\text{s.t.} \quad & \sum_{j \in N} x_{ij} = 1, && \forall i \in N, \label{eq:dricc_assign} \\
+& \sum_{j \in N} x_{jj} = p, \label{eq:dricc_districts} \\
+& \inf_{P \in \mathcal{D}} P \left\{L \leq \sum_{i \in N} \widetilde{d_i} x_{ij} \le U \right\} \ge 1 - \gamma, && \forall j \in N, \label{eq:dricc_constraint} \\
+& \sum_{i \in \cup_{v \in S}(N_v \setminus S)} x_{ij} - \sum_{i \in S} x_{ij} \ge 1 - |S|, && \forall j \in N, \; S \subseteq [N \setminus (N_j \cup \{j\})], \label{eq:dricc_contiguity} \\
+& x_{ij} \in \{0,1\}, && i,j \in N. \label{eq:dricc_binary}
+\end{align}
+
+Compared with the chance constraint \eqref{eq:cc_joint}, the distributionally robust chance constraint \eqref{eq:dricc_constraint} requires that, for every distribution within the ambiguity set $\mathcal{D}$, the probability that each region satisfies its capacity limit must be no less than $1-\gamma$. Therefore, constraint \eqref{eq:dricc_constraint} represents a \textit{distributionally robust individual chance constraint} (DRICC). If we instead require that all regions simultaneously satisfy the capacity constraints with probability at least $1-\gamma$, we obtain the \textit{distributionally robust joint chance constraint} (DRJCC) as follows:
+\begin{equation}
+\inf_{P \in \mathcal{D}} P \left\{L \leq \sum_{i \in N} \widetilde{d_i} x_{ij} \le U, \; \forall j \in N \right\} \ge 1 - \gamma. \label{eq:drjcc_constraint}
+\end{equation}
+
+Due to the presence of product terms between random variables and decision variables, the DRJCC formulation is generally much harder to handle than its individual counterpart. Therefore, this study first addresses the DRICC model, and then employs approximation methods to tackle the more challenging DRJCC formulation. For both DRICC and DRJCC models, two main issues arise: (i) how to construct the ambiguity set $\mathcal{D}$, and (ii) how to reformulate the resulting model into a tractable equivalent. These will be discussed in the following subsections.
+
+\subsection{Moment-Based Ambiguity Set Construction and Model Reformulation}
+
+\subsubsection{Moment-Based Ambiguity Set Construction}
+
+Let $\widetilde{\mathbf{d}} = [\widetilde{d_1}, \widetilde{d_2}, \ldots, \widetilde{d_N}]^\top$. We construct two types of ambiguity sets using the first and second moments of $\widetilde{\mathbf{d}}$. Suppose we have $K$ i.i.d. samples $\{ \widetilde{\mathbf{d}}^{\,k} \}_{k=1}^K$, where $\widetilde{\mathbf{d}}^{\,k} = [\widetilde{d_1^k}, \widetilde{d_2^k}, \ldots, \widetilde{d_N^k}]^\top$. The sample mean vector and covariance matrix are estimated as:
+\begin{align}
+\boldsymbol{\mu} &= \frac{1}{K} \sum_{k=1}^{K} \widetilde{\mathbf{d}}^{\,k}, \\
+\boldsymbol{\Sigma} &= \frac{1}{K} \sum_{k=1}^{K} (\widetilde{\mathbf{d}}^{\,k} - \boldsymbol{\mu})(\widetilde{\mathbf{d}}^{\,k} - \boldsymbol{\mu})^\top.
+\end{align}
+
+In subsequent computations, both $\boldsymbol{\Sigma}$ and the true covariance matrix of $\widetilde{\mathbf{d}}$ are assumed to be symmetric and positive definite,  without loss of generality. According to the law of large numbers, as $K$ increases, $\boldsymbol{\mu}$ and $\boldsymbol{\Sigma}$ converge to the true mean and covariance, respectively. Hence, when $K$ is sufficiently large, we can define an ambiguity set $\mathcal{D}_1$  \textbf{(cite Ghaoui 2003)}consisting of all distributions sharing these moments:
+\begin{equation}
+\mathcal{D}_1 = \left\{ P \in \mathcal{P}(\mathbb{R}^N) : \mathbb{E}_P[\mathbf{d}] = \boldsymbol{\mu}, \; \mathbb{E}_P[(\mathbf{d} - \boldsymbol{\mu})(\mathbf{d} - \boldsymbol{\mu})^\top] = \boldsymbol{\Sigma} \right\}.
+\end{equation}
+
+Here,
+$\mathcal{P}\left(\mathbb{R}^N\right)$
+denotes the set of all probability distributions defined on the \(N\)-dimensional space \(\mathbb{R}^N\).
+
+When the sample size is limited, the estimates of $\boldsymbol{\mu}$ and $\boldsymbol{\Sigma}$ may contain errors. To address this issue, an ambiguity set considering estimation uncertainty is defined as follows \textbf{(cite Delage and Ye 2010)}:
+\begin{equation}
+\mathcal{D}_2 = \left\{ P \in \mathcal{P}(\mathbb{R}^N) :
+\begin{aligned}
+& (\mathbb{E}_P[\mathbf{d}] - \boldsymbol{\mu})^\top \boldsymbol{\Sigma}^{-1} (\mathbb{E}_P[\mathbf{d}] - \boldsymbol{\mu}) \leq \delta_1, \\
+& \mathbb{E}_P[(\mathbf{d} - \boldsymbol{\mu})(\mathbf{d} - \boldsymbol{\mu})^\top] \preceq \delta_2 \boldsymbol{\Sigma}
+\end{aligned}
+\right\},
+\end{equation}
+where $\delta_1 > 0$ and $\delta_2 > \max\{\delta_1, 1\}$ are given parameters. From a geometric perspective, the ambiguity set $\mathcal{D}_2$ imposes two types of constraints on the distributions. First, the mean constraint $(\mathbb{E}_P[\mathbf{d}] - \boldsymbol{\mu})^\top \boldsymbol{\Sigma}^{-1} (\mathbb{E}_P[\mathbf{d}] - \boldsymbol{\mu}) \leq \delta_1$ defines an ellipsoid in the $N$-dimensional space, centered at the sample mean $\boldsymbol{\mu}$ with shape and orientation determined by the inverse covariance matrix $\boldsymbol{\Sigma}^{-1}$. The parameter $\delta_1$ controls the size of this ellipsoid, with larger values allowing means to deviate further from $\boldsymbol{\mu}$. Second, the covariance constraint $\mathbb{E}_P[(\mathbf{d} - \boldsymbol{\mu})(\mathbf{d} - \boldsymbol{\mu})^\top] \preceq \delta_2 \boldsymbol{\Sigma}$ restricts the covariance matrices to lie within a positive semidefinite cone, where $\delta_2$ serves as an upper bound scaling factor relative to the sample covariance $\boldsymbol{\Sigma}$. Together, these constraints define a geometric region in the space of probability distributions, allowing for uncertainty in both the mean and covariance while maintaining tractability. \textbf{To enhance the confidence that the true distribution of $\widetilde{\mathbf{d}}$ lies within $\mathcal{D}_2$, cross-validation can be employed to select appropriate values of $\delta_1$ and $\delta_2$.}
+
+\subsubsection{Model Reformulation under DRICC}
+
+For each region-specific constraint in \eqref{eq:dricc_constraint}, let $\mathbf{x}_j = [x_{1j}, x_{2j}, \ldots, x_{Nj}]^\top$ for all $j \in N$. The corresponding constraint can be rewritten as:
+\begin{equation}
+\inf_{P \in \mathcal{D}} P \{L \leq \widetilde{\mathbf{d}}^\top \mathbf{x}_j \le U \} \ge 1 - \gamma, \quad \forall j \in N. \label{eq:dricc_rewritten}
+\end{equation}
+
+\begin{theorem}\label{thm:dricc_d1}
+When $\mathcal{D} = \mathcal{D}_1$, constraints \eqref{eq:dricc_rewritten} can be equivalently reformulated as the following constraints:
+\begin{equation}
+    \frac{\mathbf{x}_j^\top \boldsymbol{\Sigma} \mathbf{x}_j}{\mathbf{x}_j^\top \boldsymbol{\Sigma} \mathbf{x}_j + t_1^2 (\boldsymbol{\mu}^\top \mathbf{x}_j)^2} + \frac{\mathbf{x}_j^\top \boldsymbol{\Sigma} \mathbf{x}_j}{\mathbf{x}_j^\top \boldsymbol{\Sigma} \mathbf{x}_j + t_2^2 (\boldsymbol{\mu}^\top \mathbf{x}_j)^2} \le \gamma, \quad \forall j \in N, \label{eq:dricc_d1_reform}
+\end{equation}
+where $t_1 = 1 - \frac{L}{\boldsymbol{\mu}^\top \mathbf{x}_j}$, $t_2 = \frac{U}{\boldsymbol{\mu}^\top \mathbf{x}_j} - 1$.
+% \begin{align}
+% \boldsymbol{\mu}^\top \mathbf{x}_j + \sqrt{\frac{1 - z}{z}} \, \sqrt{\mathbf{x}_j^\top \boldsymbol{\Sigma} \mathbf{x}_j} &\leq U, \quad \forall j \in N, \label{eq:dricc_d1_reform_upper} \\
+% \boldsymbol{\mu}^\top \mathbf{x}_j - \sqrt{\frac{1 - z}{z}} \, \sqrt{\mathbf{x}_j^\top \boldsymbol{\Sigma} \mathbf{x}_j} &\geq L, \quad \forall j \in N, \label{eq:dricc_d1_reform_lower}
+% \end{align}
+% \begin{equation}
+% 0 \leq z \leq \gamma. \label{eq:dricc_d1_reform_z}
+% \end{equation}
+\end{theorem}
+
+Before proving Theorem \ref{thm:dricc_d1}, we first introduce Lemmas \ref{lem:dricc_equivalence} and \ref{lem:sup_P_Bj} and provide their proofs separately.
+
+\begin{lemma}\label{lem:dricc_equivalence}
+When $\mathcal{D} = \mathcal{D}_1$,  constraints \eqref{eq:dricc_rewritten} are equivalent to the following constraints:
+\begin{equation}
+\sup_{P \in \mathcal{D}_1} P \{\widetilde{\mathbf{d}}^\top \mathbf{x}_j \leq L\}  +  \sup_{P \in \mathcal{D}_1} P \{\widetilde{\mathbf{d}}^\top \mathbf{x}_j \geq U \} \le \gamma, \quad \forall j \in N.
+\end{equation}
+\end{lemma}
+
+\begin{proof}
+For a fixed $j \in N$, when $\mathcal{D} = \mathcal{D}_1$, the constraint in \eqref{eq:dricc_rewritten} is equivalent to 
+\begin{equation}
+\sup_{P \in \mathcal{D}_1} P \{\widetilde{\mathbf{d}}^\top \mathbf{x}_j \leq L \text{ or } \widetilde{\mathbf{d}}^\top \mathbf{x}_j \geq U \} \le \gamma. \label{eq:dricc_sup}
+\end{equation}
+
+Define $A_j = \{\widetilde{\mathbf{d}}^\top \mathbf{x}_j \leq L\}$ and $B_j = \{\widetilde{\mathbf{d}}^\top \mathbf{x}_j \geq U\}$. Since $U > L$, the events $A_j$ and $B_j$ are mutually exclusive. Therefore,
+\begin{equation}
+\sup_{P \in \mathcal{D}_1} P(A_j \cup B_j) = \sup_{P \in \mathcal{D}_1} \{P(A_j) + P(B_j)\} \leq \sup_{P \in \mathcal{D}_1} P(A_j) + \sup_{P \in \mathcal{D}_1} P(B_j).
+\label{eq:union_bound}
+\end{equation}
+
+The key observation is that equality in \eqref{eq:union_bound} holds if and only if there exists a distribution $P^* \in \mathcal{D}_1$ such that both $P^*(A_j) = \sup_{P \in \mathcal{D}_1} P(A_j)$ and $P^*(B_j) = \sup_{P \in \mathcal{D}_1} P(B_j)$ are simultaneously achieved. Indeed, we can always construct a distribution $P^*$ with mean $\boldsymbol{\mu}$ and covariance $\boldsymbol{\Sigma}$ such that equality holds. The detailed construction procedure is provided in Remark \ref{rem:three_point_construction} below. Consequently, we obtain:
+\begin{equation}
+\begin{aligned}
+    \sup_{P \in \mathcal{D}_1} P(A_j \cup B_j) &= \sup_{P \in \mathcal{D}_1} \{P(A_j) + P(B_j)\} \\ 
+    &= P^*(A_j) + P^*(B_j)  \\
+    &= \sup_{P \in \mathcal{D}_1} P(A_j) + \sup_{P \in \mathcal{D}_1} P(B_j) \\
+    &= \sup_{P \in \mathcal{D}_1} P\{\widetilde{\mathbf{d}}^\top \mathbf{x}_j \leq L\} + \sup_{P \in \mathcal{D}_1} P\{\widetilde{\mathbf{d}}^\top \mathbf{x}_j \geq U\}.
+\end{aligned}
+\label{eq:union_bound_equality}
+\end{equation}
+
+Substituting the left-hand side of \eqref{eq:dricc_sup}, the result follows.
+\end{proof}
+
+\begin{remark}\label{rem:three_point_construction}
+We now provide the detailed construction of the distribution $P^*$ that simultaneously achieves the suprema for both $P(A_j)$ and $P(B_j)$. Let $p_1 = \sup_{P \in \mathcal{D}_1} P(A_j)$ and $p_2 = \sup_{P \in \mathcal{D}_1} P(B_j)$, whose explicit forms are derived in Lemma \ref{lem:sup_P_Bj} and Remark \ref{rem:sup_P_Aj}. 
+
+To construct $P^*$, we employ a three-point distribution for the random variable $y = \widetilde{\mathbf{d}}^\top \mathbf{x}_j$. Specifically, we define $P^*$ such that $y$ takes three values:
+\begin{itemize}
+    \item $y = a \leq L$ with probability $p_1$,
+    \item $y = b \geq U$ with probability $p_2$,
+    \item $y = c$ with $L < c < U$ and probability $1 - p_1 - p_2$.
+\end{itemize}
+
+The coefficients $a$, $b$, and $c$ are determined by solving the system of equations that satisfy the mean and variance constraints:
+\begin{equation}
+\begin{gathered}
+    a p_1 + b p_2 + c(1-p_1-p_2) = \boldsymbol{\mu}^\top \mathbf{x}_j, \\
+    p_1(a-\boldsymbol{\mu}^\top \mathbf{x}_j)^2 + p_2(b-\boldsymbol{\mu}^\top \mathbf{x}_j)^2 + (1-p_1-p_2)(c-\boldsymbol{\mu}^\top \mathbf{x}_j)^2 = \mathbf{x}_j^\top \boldsymbol{\Sigma} \mathbf{x}_j.
+\end{gathered}
+\label{eq:constraints}
+\end{equation}
+
+Since this system has 3 unknowns ($a$, $b$, and $c$) subject to only 2 equations (the mean and variance constraints), it is underdetermined and admits infinitely many solutions. To determine a specific solution, we can, for instance, fix $c = \boldsymbol{\mu}^\top \mathbf{x}_j$ (the mean value), and then solve for $a$ and $b$ from the remaining constraints. Alternatively, we can choose any $c \in (L, U)$ and solve the resulting system. As $\mathcal{D}_1$ encompasses all distributions with mean $\boldsymbol{\mu}$ and covariance $\boldsymbol{\Sigma}$, any solution to system \eqref{eq:constraints} corresponds to a valid distribution within the ambiguity set, thereby ensuring the existence of $P^*$.
+\end{remark}
+
+Next, we derive the reformulation of $\sup_{P \in \mathcal{D}_1} P(A_j)$ and $\sup_{P \in \mathcal{D}_1} P(B_j)$. We illustrate the derivation using $\sup_{P \in \mathcal{D}_1} P(B_j)$ as an example, and the reformulation of $\sup_{P \in \mathcal{D}_1} P(A_j)$ follows a similar approach. 
+
+\begin{lemma}\label{lem:sup_P_Bj}
+    When $\mathcal{D} = \mathcal{D}_1$, we have
+    \begin{equation}
+    \sup_{P \in \mathcal{D}_1} P\{\widetilde{\mathbf{d}}^\top \mathbf{x}_j \geq U\} = \frac{\mathbf{x}_j^\top \boldsymbol{\Sigma} \mathbf{x}_j}{\mathbf{x}_j^\top \boldsymbol{\Sigma} \mathbf{x}_j + t_2^2 (\boldsymbol{\mu}^\top \mathbf{x}_j)^2},
+    \end{equation}
+    where $t_2 = \frac{U}{\boldsymbol{\mu}^\top \mathbf{x}_j} - 1$.
+\end{lemma}
+    
+\begin{proof}
+
+According to Cantelli's inequality, for any scalar random variable $y$ with mean $\mathbb{E}(y)$ and variance $\sigma^2$, we have for any $\lambda > 0$:
+\begin{equation}
+P(y - \mathbb{E}(y) \ge \lambda) \le \frac{\sigma^2}{\sigma^2 + \lambda^2}. \label{eq:cantelli}
+\end{equation}
+
+Setting $\lambda = t_2 \mathbb{E}(y)$ gives:
+\begin{equation}
+P[y \ge (1 + t_2)\mathbb{E}(y)] \le \frac{\sigma^2}{\sigma^2 + t_2^2 \mathbb{E}^2(y)}. \label{eq:cantelli_t}
+\end{equation}
+
+For the random variable $\widetilde{\mathbf{d}}^\top \mathbf{x}_j$, its mean and variance are $\boldsymbol{\mu}^\top \mathbf{x}_j$ and $\mathbf{x}_j^\top \boldsymbol{\Sigma} \mathbf{x}_j$, respectively. Substituting $y = \widetilde{\mathbf{d}}^\top \mathbf{x}_j$ and setting $t_2 = \frac{U}{\boldsymbol{\mu}^\top \mathbf{x}_j} - 1$, we obtain:
+\begin{equation}
+P[\widetilde{\mathbf{d}}^\top \mathbf{x}_j \ge U] \le \frac{\mathbf{x}_j^\top \boldsymbol{\Sigma} \mathbf{x}_j}{\mathbf{x}_j^\top \boldsymbol{\Sigma} \mathbf{x}_j + t_2^2 (\boldsymbol{\mu}^\top \mathbf{x}_j)^2}. \label{eq:dricc_prob}
+\end{equation}
+
+Since $\mathcal{D}_1$ includes all distributions with mean $\boldsymbol{\mu}$ and covariance $\boldsymbol{\Sigma}$, the supremum is achieved when equality holds:
+\begin{equation}
+\sup_{P \in \mathcal{D}_1} P\{\widetilde{\mathbf{d}}^\top \mathbf{x}_j \ge U\} = \frac{\mathbf{x}_j^\top \boldsymbol{\Sigma} \mathbf{x}_j}{\mathbf{x}_j^\top \boldsymbol{\Sigma} \mathbf{x}_j + t_2^2 (\boldsymbol{\mu}^\top \mathbf{x}_j)^2} \le \gamma. \label{eq:dricc_sup_equality}
+\end{equation}
+\end{proof}
+
+\begin{remark}\label{rem:sup_P_Aj}
+When deriving $\sup_{P \in \mathcal{D}_1} P \{\widetilde{\mathbf{d}}^\top \mathbf{x}_j \leq L\}$, we use the complementary form of Cantelli's inequality:
+\begin{equation}
+P(\mathbb{E}(y) - y \ge \lambda) \le \frac{\sigma^2}{\sigma^2 + \lambda^2},
+\end{equation}
+which is equivalent to $P[y \le \mathbb{E}(y) - \lambda]$. Setting $\lambda = t_1 \mathbb{E}(y)$ yields $P[y \le (1 - t_1)\mathbb{E}(y)]$, where $t_1 = 1 - \frac{L}{\boldsymbol{\mu}^\top \mathbf{x}_j}$. The remainder of the proof follows the same approach as in Lemma \ref{lem:sup_P_Bj}, leading to the final result:
+\begin{equation}
+\sup_{P \in \mathcal{D}_1} P\{\widetilde{\mathbf{d}}^\top \mathbf{x}_j \leq L\} = \frac{\mathbf{x}_j^\top \boldsymbol{\Sigma} \mathbf{x}_j}{\mathbf{x}_j^\top \boldsymbol{\Sigma} \mathbf{x}_j + t_1^2 (\boldsymbol{\mu}^\top \mathbf{x}_j)^2},
+\end{equation}
+where $t_1 = 1 - \frac{L}{\boldsymbol{\mu}^\top \mathbf{x}_j}$.
+\end{remark}
+
+Now we combine the results from Lemma \ref{lem:dricc_equivalence} and Lemma \ref{lem:sup_P_Bj} and Remark \ref{rem:sup_P_Aj} presented above to provide the proof of Theorem \ref{thm:dricc_d1}.
+
+\begin{proof}[Proof of Theorem \ref{thm:dricc_d1}]
+By Lemma \ref{lem:dricc_equivalence}, the constraint \eqref{eq:dricc_rewritten} is equivalent to:
+\begin{equation*}
+\sup_{P \in \mathcal{D}_1} P \{\widetilde{\mathbf{d}}^\top \mathbf{x}_j \leq L\}  +  \sup_{P \in \mathcal{D}_1} P \{\widetilde{\mathbf{d}}^\top \mathbf{x}_j \geq U \} \le \gamma, \quad \forall j \in N.
+\end{equation*}
+
+From Lemma \ref{lem:sup_P_Bj}, we have:
+\begin{equation*}
+\sup_{P \in \mathcal{D}_1} P\{\widetilde{\mathbf{d}}^\top \mathbf{x}_j \geq U\} = \frac{\mathbf{x}_j^\top \boldsymbol{\Sigma} \mathbf{x}_j}{\mathbf{x}_j^\top \boldsymbol{\Sigma} \mathbf{x}_j + t_2^2 (\boldsymbol{\mu}^\top \mathbf{x}_j)^2},
+\end{equation*}
+where $t_2 = \frac{U}{\boldsymbol{\mu}^\top \mathbf{x}_j} - 1$.
+
+From Remark \ref{rem:sup_P_Aj}, we have:
+\begin{equation*}
+\sup_{P \in \mathcal{D}_1} P\{\widetilde{\mathbf{d}}^\top \mathbf{x}_j \leq L\} = \frac{\mathbf{x}_j^\top \boldsymbol{\Sigma} \mathbf{x}_j}{\mathbf{x}_j^\top \boldsymbol{\Sigma} \mathbf{x}_j + t_1^2 (\boldsymbol{\mu}^\top \mathbf{x}_j)^2},
+\end{equation*}
+where $t_1 = 1 - \frac{L}{\boldsymbol{\mu}^\top \mathbf{x}_j}$.
+
+Substituting these expressions into the constraint, we obtain:
+\begin{equation*}
+\frac{\mathbf{x}_j^\top \boldsymbol{\Sigma} \mathbf{x}_j}{\mathbf{x}_j^\top \boldsymbol{\Sigma} \mathbf{x}_j + t_1^2 (\boldsymbol{\mu}^\top \mathbf{x}_j)^2} + \frac{\mathbf{x}_j^\top \boldsymbol{\Sigma} \mathbf{x}_j}{\mathbf{x}_j^\top \boldsymbol{\Sigma} \mathbf{x}_j + t_2^2 (\boldsymbol{\mu}^\top \mathbf{x}_j)^2} \le \gamma, \quad \forall j \in N,
+\end{equation*}
+which completes the proof.
+\end{proof}
+
+\textbf{In the following, we still consider the ambiguity set $\mathcal{D}_1$ and explain how to handle the equivalent constraints \eqref{eq:dricc_d1_reform} derived in Theorem \ref{thm:dricc_d1}.}
+
+\textbf{In addition to the aforementioned search approach via xxx, we can also handle constraints \eqref{eq:dricc_d1_reform} through an approximation method.} Since the left-hand side (LHS) of constraint \eqref{eq:dricc_d1_reform} represents the upper bounds of the probabilities of two types of balance constraint violations under the ambiguity set $\mathcal{D}_1$, namely $\widetilde{\mathbf{d}}^\top \mathbf{x}_j \leq L$ and $\widetilde{\mathbf{d}}^\top \mathbf{x}_j \geq U$, we can decompose the confidence level $\gamma$ into $\gamma_a$ and $\gamma_b$ based on different tolerance levels for regional workload falling below the preset lower bound $L$ (i.e., $\widetilde{\mathbf{d}}^\top \mathbf{x}_j \leq L$) and exceeding the preset upper bound $U$ (i.e., $\widetilde{\mathbf{d}}^\top \mathbf{x}_j \geq U$), where $\gamma_a + \gamma_b = \gamma$. Out of humanitarian considerations for alleviating courier workload, we set $\gamma_a \geq \gamma_b$, meaning that we have relatively lower tolerance for regional workload exceeding the upper bound $U$, which accordingly reduces the probability of excessive workload for couriers in a given region. Thus, we approximate the original constraint \eqref{eq:dricc_d1_reform} by decomposing it into two sets of constraints:
+\begin{equation}
+\frac{\mathbf{x}_j^\top \boldsymbol{\Sigma} \mathbf{x}_j}{\mathbf{x}_j^\top \boldsymbol{\Sigma} \mathbf{x}_j + t_1^2 (\boldsymbol{\mu}^\top \mathbf{x}_j)^2} \le \gamma_a, \quad \forall j \in N, \label{eq:approx_constraint_1}
+\end{equation}
+\begin{equation}
+\frac{\mathbf{x}_j^\top \boldsymbol{\Sigma} \mathbf{x}_j}{\mathbf{x}_j^\top \boldsymbol{\Sigma} \mathbf{x}_j + t_2^2 (\boldsymbol{\mu}^\top \mathbf{x}_j)^2} \le \gamma_b, \quad \forall j \in N, \label{eq:approx_constraint_2}
+\end{equation}
+\begin{equation}
+    \gamma_a + \gamma_b = \gamma.
+\end{equation}
+
+We refer to this approximation method as the \textit{Approximate Decomposition Method} (ADM). For the above two sets of constraints, we can transform them into equivalent second-order cone (SOC) constraints \eqref{eq:dricc_d1_reform_lower}, \eqref{eq:dricc_d1_reform_upper}, which converts the entire problem into a second-order cone programming (SOCP) model. When the decision variables are continuous, the SOCP can be solved in polynomial time; thus, a branch-and-bound approach can be employed to efficiently solve the mixed-integer SOCP model. \textbf{Therefore, the approximated mixed-integer SOCP problem can be directly solved using the algorithm presented in Section xxx.}
+
+\begin{align}
+\boldsymbol{\mu}^\top \mathbf{x}_j - \sqrt{\frac{1 - \gamma_a}{\gamma_a}} \, \sqrt{\mathbf{x}_j^\top \boldsymbol{\Sigma} \mathbf{x}_j} &\geq L, \quad \forall j \in N, \label{eq:dricc_d1_reform_lower} \\
+\boldsymbol{\mu}^\top \mathbf{x}_j + \sqrt{\frac{1 - \gamma_b}{\gamma_b}} \, \sqrt{\mathbf{x}_j^\top \boldsymbol{\Sigma} \mathbf{x}_j} &\leq U, \quad \forall j \in N. \label{eq:dricc_d1_reform_upper}
+\end{align}
+
+
+\textbf{The constraints for $\mathcal{D}_2$ are relatively complex (however, they appear to be tractable, though this requires further investigation and is deferred to future work). While tabu search could potentially be employed as a solution approach, we focus here on the constraints obtained through approximation methods and defer the consideration of tabu search to future work.}
+
+For the constraint approximation under the ambiguity set $\mathcal{D}_2$, we refer to Theorem 3.2 in \textbf{Ambiguous Chance-Constrained Binary Programs under Mean-Covariance Information}. The corresponding derivation follows.
+
+\begin{lemma}\label{lem:dricc_d2}
+When $\mathcal{D} = \mathcal{D}_2$, if $\frac{\delta_1}{\delta_2} \le \gamma$, then the constraint $\inf_{P \in \mathcal{D}_2} P \{\widetilde{\mathbf{d}}^\top \mathbf{x}_j \leq U\} \geq 1 - \gamma$ is equivalent to(\textbf{CITE}):
+\begin{equation}
+\boldsymbol{\mu}^\top \mathbf{x}_j + \left(\sqrt{\delta_1} + \sqrt{\frac{1 - \gamma}{\gamma} (\delta_2 - \delta_1)}\right) \sqrt{\mathbf{x}_j^\top \boldsymbol{\Sigma} \mathbf{x}_j} \le U, \quad \forall j \in N. \label{eq:dricc_d2_reform1}
+\end{equation}
+If $\frac{\delta_1}{\delta_2} > \gamma$, then the constraint $\inf_{P \in \mathcal{D}_2} P \{\widetilde{\mathbf{d}}^\top \mathbf{x}_j \leq U\} \geq 1 - \gamma$ is equivalent to:
+\begin{equation}
+\boldsymbol{\mu}^\top \mathbf{x}_j + \sqrt{\frac{\delta_2}{\gamma}} \sqrt{\mathbf{x}_j^\top \boldsymbol{\Sigma} \mathbf{x}_j} \le U, \quad \forall j \in N. \label{eq:dricc_d2_reform2}
+\end{equation}
+\end{lemma}
+
+\begin{proof}
+The proof follows directly from Theorem 3.2 in \textbf{Ambiguous Chance-Constrained Binary Programs under Mean-Covariance Information}.
+\end{proof}
+
+\begin{remark}\label{rem:dricc_d2_lower}
+The reformulation for the constraint $\inf_{P \in \mathcal{D}_2} P \{\widetilde{\mathbf{d}}^\top \mathbf{x}_j \geq L\} \geq 1 - \gamma$ can be derived by equivalently transforming it into $\inf_{P \in \mathcal{D}_2} P \{ - \widetilde{\mathbf{d}}^\top \mathbf{x}_j \leq -L\} \geq 1 - \gamma$. Specifically, by applying the Lemma \ref{lem:dricc_d2}, we obtain the following equivalent constraints for $\inf_{P \in \mathcal{D}_2} P \{\widetilde{\mathbf{d}}^\top \mathbf{x}_j \geq L\} \geq 1 - \gamma$:
+
+If $\frac{\delta_1}{\delta_2} \le \gamma$, then:
+\begin{equation}
+\boldsymbol{\mu}^\top \mathbf{x}_j - \left(\sqrt{\delta_1} + \sqrt{\frac{1 - \gamma}{\gamma} (\delta_2 - \delta_1)}\right) \sqrt{\mathbf{x}_j^\top \boldsymbol{\Sigma} \mathbf{x}_j} \geq L, \quad \forall j \in N.
+\end{equation}
+If $\frac{\delta_1}{\delta_2} > \gamma$, then:
+\begin{equation}
+\boldsymbol{\mu}^\top \mathbf{x}_j - \sqrt{\frac{\delta_2}{\gamma}} \sqrt{\mathbf{x}_j^\top \boldsymbol{\Sigma} \mathbf{x}_j} \geq L, \quad \forall j \in N.
+\end{equation}
+\end{remark}
+
+\begin{theorem}\label{thm:dricc_d2_adm}
+When $\mathcal{D} = \mathcal{D}_2$, using the ADM to approximate constraint \eqref{eq:dricc_rewritten}, we decompose $\gamma$ into $\gamma_a$ and $\gamma_b$ such that $\gamma_a + \gamma_b = \gamma$. The constraint \eqref{eq:dricc_rewritten} can be approximated by the following constraints, depending on the relationship between $\frac{\delta_1}{\delta_2}$ and $\gamma_a$, $\gamma_b$:
+
+\textbf{Case 1:} If $\frac{\delta_1}{\delta_2} \le \gamma_a$ and $\frac{\delta_1}{\delta_2} \le \gamma_b$, then:
+\begin{align}
+\boldsymbol{\mu}^\top \mathbf{x}_j - \left(\sqrt{\delta_1} + \sqrt{\frac{1 - \gamma_a}{\gamma_a} (\delta_2 - \delta_1)}\right) \sqrt{\mathbf{x}_j^\top \boldsymbol{\Sigma} \mathbf{x}_j} &\geq L, \quad \forall j \in N, \label{eq:dricc_d2_adm_case1_lower} \\
+\boldsymbol{\mu}^\top \mathbf{x}_j + \left(\sqrt{\delta_1} + \sqrt{\frac{1 - \gamma_b}{\gamma_b} (\delta_2 - \delta_1)}\right) \sqrt{\mathbf{x}_j^\top \boldsymbol{\Sigma} \mathbf{x}_j} &\le U, \quad \forall j \in N. \label{eq:dricc_d2_adm_case1_upper}
+\end{align}
+
+\textbf{Case 2:} If $\frac{\delta_1}{\delta_2} \le \gamma_a$ and $\frac{\delta_1}{\delta_2} > \gamma_b$, then:
+\begin{align}
+\boldsymbol{\mu}^\top \mathbf{x}_j - \left(\sqrt{\delta_1} + \sqrt{\frac{1 - \gamma_a}{\gamma_a} (\delta_2 - \delta_1)}\right) \sqrt{\mathbf{x}_j^\top \boldsymbol{\Sigma} \mathbf{x}_j} &\geq L, \quad \forall j \in N, \label{eq:dricc_d2_adm_case2_lower} \\
+\boldsymbol{\mu}^\top \mathbf{x}_j + \sqrt{\frac{\delta_2}{\gamma_b}} \sqrt{\mathbf{x}_j^\top \boldsymbol{\Sigma} \mathbf{x}_j} &\le U, \quad \forall j \in N. \label{eq:dricc_d2_adm_case2_upper}
+\end{align}
+
+\textbf{Case 3:} If $\frac{\delta_1}{\delta_2} > \gamma_a$ and $\frac{\delta_1}{\delta_2} \le \gamma_b$, then:
+\begin{align}
+\boldsymbol{\mu}^\top \mathbf{x}_j - \sqrt{\frac{\delta_2}{\gamma_a}} \sqrt{\mathbf{x}_j^\top \boldsymbol{\Sigma} \mathbf{x}_j} &\geq L, \quad \forall j \in N, \label{eq:dricc_d2_adm_case3_lower} \\
+\boldsymbol{\mu}^\top \mathbf{x}_j + \left(\sqrt{\delta_1} + \sqrt{\frac{1 - \gamma_b}{\gamma_b} (\delta_2 - \delta_1)}\right) \sqrt{\mathbf{x}_j^\top \boldsymbol{\Sigma} \mathbf{x}_j} &\le U, \quad \forall j \in N. \label{eq:dricc_d2_adm_case3_upper}
+\end{align}
+
+\textbf{Case 4:} If $\frac{\delta_1}{\delta_2} > \gamma_a$ and $\frac{\delta_1}{\delta_2} > \gamma_b$, then:
+\begin{align}
+\boldsymbol{\mu}^\top \mathbf{x}_j - \sqrt{\frac{\delta_2}{\gamma_a}} \sqrt{\mathbf{x}_j^\top \boldsymbol{\Sigma} \mathbf{x}_j} &\geq L, \quad \forall j \in N, \label{eq:dricc_d2_adm_case4_lower} \\
+\boldsymbol{\mu}^\top \mathbf{x}_j + \sqrt{\frac{\delta_2}{\gamma_b}} \sqrt{\mathbf{x}_j^\top \boldsymbol{\Sigma} \mathbf{x}_j} &\le U, \quad \forall j \in N. \label{eq:dricc_d2_adm_case4_upper}
+\end{align}
+\end{theorem}
+
+\begin{proof}
+For a fixed $j \in N$, we start with the constraint in \eqref{eq:dricc_rewritten}:
+\begin{equation*}
+\inf_{P \in \mathcal{D}_2} P \{L \leq \widetilde{\mathbf{d}}^\top \mathbf{x}_j \le U \} \ge 1 - \gamma.
+\end{equation*}
+
+Using the complement relationship, we have:
+\begin{equation*}
+\inf_{P \in \mathcal{D}_2} P \{L \leq \widetilde{\mathbf{d}}^\top \mathbf{x}_j \le U \} = 1 - \sup_{P \in \mathcal{D}_2} P \{\widetilde{\mathbf{d}}^\top \mathbf{x}_j \leq L \text{ or } \widetilde{\mathbf{d}}^\top \mathbf{x}_j \geq U \}.
+\end{equation*}
+
+Following the same argument as in Lemma \ref{lem:dricc_equivalence}, since the events $\{\widetilde{\mathbf{d}}^\top \mathbf{x}_j \leq L\}$ and $\{\widetilde{\mathbf{d}}^\top \mathbf{x}_j \geq U\}$ are mutually exclusive, we can apply the result from Lemma \ref{lem:dricc_equivalence} to separate the supremum:
+\begin{equation*}
+\sup_{P \in \mathcal{D}_2} P \{\widetilde{\mathbf{d}}^\top \mathbf{x}_j \leq L \text{ or } \widetilde{\mathbf{d}}^\top \mathbf{x}_j \geq U \} = \sup_{P \in \mathcal{D}_2} P \{\widetilde{\mathbf{d}}^\top \mathbf{x}_j \leq L\} + \sup_{P \in \mathcal{D}_2} P \{\widetilde{\mathbf{d}}^\top \mathbf{x}_j \geq U\}.
+\end{equation*}
+
+Therefore, the original constraint becomes:
+\begin{equation*}
+1 - \sup_{P \in \mathcal{D}_2} P \{\widetilde{\mathbf{d}}^\top \mathbf{x}_j \leq L\} - \sup_{P \in \mathcal{D}_2} P \{\widetilde{\mathbf{d}}^\top \mathbf{x}_j \geq U\} \ge 1 - \gamma,
+\end{equation*}
+which can be rearranged as:
+\begin{equation}
+\sup_{P \in \mathcal{D}_2} P \{\widetilde{\mathbf{d}}^\top \mathbf{x}_j \leq L\} + \sup_{P \in \mathcal{D}_2} P \{\widetilde{\mathbf{d}}^\top \mathbf{x}_j \geq U\} \le \gamma.
+\label{eq:dricc_d2_sup}
+\end{equation}
+
+Applying the ADM introduced for the case when $\mathcal{D} = \mathcal{D}_1$, we decompose $\gamma$ into two nonnegative parameters $\gamma_a$ and $\gamma_b$ such that $\gamma_a + \gamma_b = \gamma$ and $\gamma_a \geq \gamma_b$. This decomposition allows us to split constraint \eqref{eq:dricc_d2_sup} into two separate constraints:
+\begin{equation}
+\sup_{P \in \mathcal{D}_2} P \{\widetilde{\mathbf{d}}^\top \mathbf{x}_j \leq L\} \le \gamma_a,
+\end{equation}
+\begin{equation}
+\sup_{P \in \mathcal{D}_2} P \{\widetilde{\mathbf{d}}^\top \mathbf{x}_j \geq U\} \le \gamma_b.
+\end{equation}
+
+The above two constraints can be equivalently rewritten as:
+\begin{equation}
+\inf_{P \in \mathcal{D}_2} P \{\widetilde{\mathbf{d}}^\top \mathbf{x}_j \geq L\} \geq 1 - \gamma_a,
+\end{equation}
+\begin{equation}
+\inf_{P \in \mathcal{D}_2} P \{\widetilde{\mathbf{d}}^\top \mathbf{x}_j \leq U\} \geq 1 - \gamma_b.
+\end{equation}
+
+By applying the reformulation results from Lemma \ref{lem:dricc_d2} and Remark \ref{rem:dricc_d2_lower} to the decomposed constraints, and taking into account the relationship between $\frac{\delta_1}{\delta_2}$ and the parameters $\gamma_a$ and $\gamma_b$, we obtain the desired result.
+\end{proof}
+
+All the above constraints can be unified in the following compact form:
+\begin{equation}
+\boldsymbol{\mu}^\top \mathbf{x} + t \sqrt{\mathbf{x}^\top \boldsymbol{\Sigma} \mathbf{x}} \le U, \label{eq:dricc_unified}
+\end{equation}
+where $t$ is a fixed scalar constant. Since $\boldsymbol{\Sigma}$ is symmetric and positive definite, we have $\sqrt{\mathbf{x}^\top \boldsymbol{\Sigma} \mathbf{x}} = \|\boldsymbol{\Sigma}^{1/2} \mathbf{x}\|_2$, and \eqref{eq:dricc_unified} can be rewritten as:
+\begin{equation}
+\|\boldsymbol{\Sigma}^{1/2} \mathbf{x}\|_2 \le \frac{-\boldsymbol{\mu}^\top \mathbf{x} + U}{t}. \label{eq:dricc_soc}
+\end{equation}
+
+It is clear that all the reformulated constraints are second-order cone (SOC) constraints, which transform the overall problem into a second-order cone programming (SOCP) model. When the decision variables are continuous, the SOCP can be solved in polynomial time; thus, a branch-and-bound approach can be employed to efficiently solve the mixed-integer SOCP version of the DRICC model.
+
+\subsection{Solution Algorithm}
+
+When \(\mathcal{D} = \mathcal{D}_1\), the model is reformulated as minimizing the objective function \eqref{eq:dricc_obj}, subject to constraints \eqref{eq:dricc_assign}--\eqref{eq:dricc_districts}, \eqref{eq:dricc_contiguity}--\eqref{eq:dricc_binary}, and \eqref{eq:dricc_d1_reform}. In this model, the contiguity constraints \eqref{eq:dricc_contiguity} are exponential in number and the problem is a pure integer program; therefore, an exact solution can be obtained using a branch-and-bound method combined with constraint generation. However, it should be noted that this approach is only suitable for small-scale instances, as the solution time becomes intractable when the number of basic units is large.
+
+For large-scale instances with many basic units, a heuristic algorithm can also be applied. Since constraint \eqref{eq:dricc_constraint} consists of \(N\) independent distributionally robust individual chance constraints, after reformulation into SOC constraints, there are \(N\) such constraints in \eqref{eq:dricc_d1_reform}. As mentioned above, many basic units are unlikely to serve as region centers, so the majority of SOC constraints are practically redundant, which slows down the solution process. In this case, the iterative location–allocation algorithm with constraint generation from \textbf{Section 2.4} can be applied for rapid solution. The procedure is similar: first, select a set of promising region centers; then, fix the corresponding decision variables and solve a relaxed assignment problem where the contiguity constraints are relaxed and the capacity constraints are expressed as SOC constraints. Since most decision variables are fixed, only \(p\) SOC constraints remain, corresponding to the number of regions. The region centers are then iteratively adjusted until convergence, followed by iterations to resolve disconnected regions. The detailed steps are described in \textbf{Section 2.4}.
+
+When \(\mathcal{D} = \mathcal{D}_2\), the only difference compared to \(\mathcal{D}_1\) is the constant coefficient in the SOC constraint, while all other aspects remain the same. Therefore, the solution algorithm is identical and will not be repeated here.
+
+
+\subsection{DRJCC Model Reformulation Based on Bonferroni Approximation}
+
+In this section, we consider the distributionally robust joint chance constraint (DRJCC), where the chance constraint is no longer \eqref{eq:dricc_constraint} but \eqref{eq:drjcc_constraint}:
+\begin{equation*}
+\inf_{P\in\mathcal{D}} P\left\{L \leq \sum_{i\in N} \widetilde{d_i} x_{ij} \le U, \ \forall j\in N \right\} \ge 1-\gamma \,.
+\end{equation*}
+
+The DRJCC is more challenging than the DRICC due to the presence of products between random variables and decision variables, thus, approximation methods are commonly used. A standard approach is to apply the Bonferroni inequality to decompose the DRJCC into multiple DRICC constraints, which can be reformulated as tractbale SOC individually.
+
+The Bonferroni inequality states that for \(K\) events \(A_1, \ldots, A_K\),
+\begin{equation}
+P\left(\bigcup_{k=1}^{K} A_k\right) \le \sum_{k=1}^{K} P(A_k) \,.
+\end{equation}
+
+Assume that for each DRICC,
+\begin{equation}
+\inf_{P\in\mathcal{D}} P\left\{L \leq \widetilde{\mathbf{d}}^T \mathbf{x}_j \le U \right\} \ge 1-\gamma_j, \quad \forall j \in N,
+\end{equation}
+with \(\sum_{j\in N} \gamma_j = \gamma\). Then,
+\begin{equation}
+    \sup_{P \in \mathcal{D}_1} P \{\widetilde{\mathbf{d}}^\top \mathbf{x}_j \leq L \text{ or } \widetilde{\mathbf{d}}^\top \mathbf{x}_j \geq U \} \le \gamma_j, \quad \forall j \in N.
+\end{equation}
+
+It follows that
+\begin{align}
+\inf_{P\in\mathcal{D}} P\left\{L \leq \widetilde{\mathbf{d}}^T \mathbf{x}_j \le U, \forall j\in N \right\} &= 1 - \sup_{P \in \mathcal{D}_1} P \{\widetilde{\mathbf{d}}^\top \mathbf{x}_j \leq L \text{ or } \widetilde{\mathbf{d}}^\top \mathbf{x}_j \geq U \} \nonumber \\
+&\ge 1 - \sum_{j\in N} \gamma_j = 1 - \gamma \,. \label{eq:drjcc_decomposition}
+\end{align}
+
+Therefore, if each of the \(N\) distributionally robust individual chance constraints
+\begin{equation}
+\inf_{P\in\mathcal{D}} P\left\{L \leq \widetilde{\mathbf{d}}^T \mathbf{x}_j \le U \right\} \ge 1 - \gamma_j, \quad \forall j\in N \label{eq:drjcc_individual}
+\end{equation}
+is satisfied and \(\sum_{j\in N} \gamma_j = \gamma$, the corresponding DRJCC
+\begin{equation}
+\inf_{P\in\mathcal{D}} P\left\{L \leq \widetilde{\mathbf{d}}^T \mathbf{x}_j \le U, \forall j \in N \right\} \ge 1 - \gamma
+\end{equation}
+is guaranteed. For constraint \eqref{eq:drjcc_individual}, we have introduced methods to handle it for both ambiguity sets $\mathcal{D}_1$ and $\mathcal{D}_2$ \textbf{in the previous sections(which sections specifically?)}.
+
+A practical issue in the above approximation is how to choose appropriate \(\gamma_j\) for each DRICC. Some studies set \(\gamma_j = \gamma/N\), so that each individual chance constraint has an equal satisfaction probability. This method is simple and preserves the convexity of the feasible set after reformulating the DRICC into SOC constraints. However, this approach can be conservative, especially when there is strong correlation among individual constraints in the joint chance constraint. An alternative is to treat \(\gamma_j\) as decision variables and optimize them to achieve the best approximation. While theoretically appealing, this breaks the convexity of the feasible set, making the problem extremely challenging to solve. Literature shows that solving such SOC-like models is NP-Hard. Therefore, for computational efficiency, we adopt the first strategy in our experiments.
+
+% \subsection{Summary of this section}
+\begin{remark}
+In this section, a distributional ambiguity set is constructed based on the first and second moment information, and it is shown that distributionally robust individual chance constraints can be reformulated as second-order cone (SOC) constraints. For the more complex distributionally robust joint chance constraints, a Bonferroni-based approximation is proposed, which balances tractability with conservatism in the approximate model.
+\end{remark}
+
+\section{Improved Model Formulation}
+
+In this section, we present several key improvements to the territory design model introduced in the previous sections. These enhancements are motivated by practical considerations in last-mile delivery operations, where the actual workload distribution and operational stability are of paramount importance. Specifically, we address three critical aspects: (i) a more realistic workload measurement that accounts for both demand volume and delivery distance, (ii) an objective function transformation from compactness optimization to total workload minimization under distributional uncertainty, and (iii) the introduction of solution stability constraints to ensure minimal disruption when re-optimizing territory assignments.
+
+The motivation for these improvements stems from real-world challenges in last-mile logistics. In practice, courier workload is not solely determined by the number of parcels to be delivered, but also by the total distance traveled. A courier assigned to a district with high demand density but short delivery routes may experience less physical strain than one serving a sparsely populated area with long travel distances between delivery points(\textbf{Add a picture here}). 
+
+Furthermore, territory assignments are not static. Re-partitioning becomes necessary when significant changes occur in the operational environment, such as substantial shifts in demand patterns, expansion or contraction of service areas, introduction of new distribution centers, or persistent workload imbalances that cannot be resolved through minor adjustments. While re-partitioning is sometimes unavoidable, it can disrupt established operational routines, increase training costs, and reduce courier efficiency due to the need to familiarize themselves with new routes. Therefore, our improved model aims to balance workload equity more accurately while maintaining operational continuity.
+
+\subsection{Workload Measurement Enhancement}
+
+The first improvement concerns how workload is measured. In the previous models, the workload of a district was simply defined as the sum of demand quantities $\sum_{i \in N} d_i x_{ij}$ for district $j$. However, this measure fails to capture the actual effort required for delivery, as it ignores the spatial distribution of demand points and the distances that couriers must travel.
+
+In reality, the workload experienced by a courier depends on both the quantity of parcels and the total distance traveled. For instance, delivering 50 parcels within a compact urban neighborhood requires significantly less effort than delivering the same number of parcels across a sprawling suburban area. To better reflect this reality, we redefine workload as the product of demand and delivery distance.
+
+Let $r_{ij}$ denote the delivery distance from basic unit $i$ to the district center $j$, which represents the shortest path distance based on the actual road network graph $G = (N, E)$. This distance $r_{ij}$ differs from the Euclidean distance $c_{ij}$ used in the compactness objective (see \eqref{eq:det_obj}), as it accounts for the actual routing costs imposed by the road infrastructure. The delivery distance $r_{ij}$ can be computed using standard shortest path algorithms (e.g., Dijkstra's algorithm) on the graph $G$, where edge weights correspond to actual road segment lengths.
+
+With this definition, the workload of district $j$ is now measured as $\sum_{i \in N} \widetilde{d}_i r_{ij} x_{ij}$, which represents the total demand-weighted delivery distance. This measure more accurately reflects the physical effort and time required for a courier to complete deliveries within the assigned district, thereby enabling a more balanced and equitable workload distribution.
+
+\subsection{Objective Function Transformation}
+
+The second improvement involves transforming the objective function from compactness optimization to total workload minimization under distributional uncertainty. In the previous models, the objective was to minimize $\sum_{i \in N} \sum_{j \in N} c_{ij} x_{ij}$, which promotes compact districts by minimizing the total Euclidean distance from basic units to their assigned district centers.
+
+However, when courier workload and delivery costs become the primary concern, we should instead minimize the total workload across all districts while accounting for demand uncertainty. Since demand $\widetilde{d}_i$ is stochastic, the total workload $\sum_{j \in N} \sum_{i \in N} \widetilde{d}_i r_{ij} x_{ij}$ is also a random variable. To handle this uncertainty in a distributionally robust way, we adopt a worst-case expected value approach, leading to the following objective function:
+
+\begin{equation}
+\min \sup_{P \in \mathcal{D}} \mathbb{E}_P\left[\sum_{j \in N} \sum_{i \in N} \widetilde{d}_i r_{ij} x_{ij}\right],
+\end{equation}
+
+This min-sup formulation ensures that the solution performs well even under the worst-case distribution within the ambiguity set $\mathcal{D}$, providing robust guarantees for total workload minimization.
+
+\subsection{Improved Model Formulation}
+
+Based on the above improvements, the enhanced distributionally robust chance-constrained territory design model can be formulated as follows:
+
+\begin{align}
+&\min \sup_{P \in \mathcal{D}} \mathbb{E}_P\left[\sum_{j \in N} \sum_{i \in N} \widetilde{d}_i r_{ij} x_{ij}\right] \label{eq:improved_obj} \\
+&\text{s.t.} \quad \sum_{j \in N} x_{ij} = 1, && \forall i \in N \label{eq:improved_assign} \\
+&\quad \sum_{j \in N} x_{jj} = p, \label{eq:improved_districts} \\
+&\quad \inf_{P \in \mathcal{D}} P\left\{ L \leq \sum_{i \in N} \widetilde{d}_i r_{ij} x_{ij} \leq U \right\} \geq 1 - \gamma, && \forall j \in N \label{eq:improved_balance} \\
+&\quad \sum_{i \in \cup_{v\in S}(N_v\setminus S)} x_{ij} - \sum_{i \in S} x_{ij} \ge 1 - |S|, && \forall j \in N, S \subset [N \setminus (N_j \cup \{j\})] \label{eq:improved_connectivity} \\
+&\quad x_{ij} \in \{0,1\}, && \forall i,j \in N \label{eq:improved_binary}
+\end{align}
+
+Compared with the previous models, the key changes are:
+\begin{itemize}
+    \item The objective function \eqref{eq:improved_obj} minimizes the worst-case expected total workload instead of compactness.
+    \item The balance constraint \eqref{eq:improved_balance} uses workload $\sum_{i \in N} \widetilde{d}_i r_{ij} x_{ij}$ instead of demand $\sum_{i \in N} \widetilde{d}_i x_{ij}$.
+    \item The delivery distance $r_{ij}$ replaces the Euclidean distance $c_{ij}$ in workload-related terms.
+\end{itemize}
+
+In the improved model, since the balance constraint is based on workload rather than demand, the bounds $L$ and $U$ should be computed based on the total expected workload. Let $\bar{r}_i = \frac{1}{|N|} \sum_{j \in N} r_{ij}$ denote the average delivery distance from basic unit $i$ to all potential district centers, and let $W = \sum_{i \in N} \mu_i \bar{r}_i$ denote the total expected workload, where $\mu_i$ is the mean demand of basic unit $i$. Then, the bounds are set as:
+\begin{equation}
+L = (1 - \alpha) \cdot \frac{W}{p}, \quad U = (1 + \alpha) \cdot \frac{W}{p},
+\end{equation}
+where $\alpha > 0$ is a parameter controlling the tolerance for workload imbalance across districts. This formulation ensures that the workload bounds are proportional to the total expected workload, maintaining consistency with the workload-based balance constraint.
+
+\subsection{Objective Function Reformulation}
+
+To handle the min-sup objective function computationally, we need to reformulate it into a tractable form. The approach differs depending on the ambiguity set under consideration.
+
+For the ambiguity set $\mathcal{D}_1$, since the true distribution has known mean $\boldsymbol{\mu} = [\mu_1, \mu_2, \ldots, \mu_N]^\top$ and covariance $\boldsymbol{\Sigma}$, the worst-case expected value $\sup_{P \in \mathcal{D}_1} \mathbb{E}_P[\cdot]$ can be directly computed. Since all distributions in $\mathcal{D}_1$ share the same mean $\boldsymbol{\mu}$, we have:
+
+\begin{equation}
+\sup_{P \in \mathcal{D}_1} \mathbb{E}_P\left[\sum_{j \in N} \sum_{i \in N} \widetilde{d}_i r_{ij} x_{ij}\right] = \sum_{j \in N} \sum_{i \in N} \mu_i r_{ij} x_{ij}.
+\end{equation}
+
+Therefore, the objective function \eqref{eq:improved_obj} can be equivalently reformulated as:
+
+\begin{equation}
+\min \sum_{j \in N} \sum_{i \in N} \mu_i r_{ij} x_{ij}. \label{eq:improved_obj_d1}
+\end{equation}
+
+This is an exact deterministic reformulation that does not require approximation methods.
+
+For the ambiguity set $\mathcal{D}_2$, although it allows for uncertainty in both the mean and covariance, we can still obtain an exact deterministic reformulation for the worst-case expected objective function. We first establish a key lemma characterizing the feasible mean set, then present the main reformulation result.
+
+\begin{lemma}\label{lem:d2_feasible_mean}
+For the ambiguity set $\mathcal{D}_2$, define two sets:
+\begin{align}
+\mathcal{M}_1 &:= \left\{ \mathbf{m} \in \mathbb{R}^N : \exists P \in \mathcal{D}_2 \text{ such that } \mathbb{E}_P[\mathbf{d}] = \mathbf{m} \right\}, \label{eq:M1} \\
+\mathcal{M}_2 &:= \left\{ \mathbf{m} \in \mathbb{R}^N : (\mathbf{m} - \boldsymbol{\mu})^\top \boldsymbol{\Sigma}^{-1} (\mathbf{m} - \boldsymbol{\mu}) \leq \delta \right\}, \label{eq:M2}
+\end{align}
+where $\delta = \min\{\delta_1, \delta_2\}$. Then, $\mathcal{M}_1 = \mathcal{M}_2$.
+\end{lemma}
+
+\begin{proof}
+We prove the result by establishing both directions of the set equality.
+
+\textbf{($\mathcal{M}_1 \subseteq \mathcal{M}_2$):} We first show that any feasible mean $\mathbf{m} \in \mathcal{M}_1$ must satisfy $(\mathbf{m} - \boldsymbol{\mu})^\top \boldsymbol{\Sigma}^{-1} (\mathbf{m} - \boldsymbol{\mu}) \leq \delta$.
+
+For any distribution $P \in \mathcal{D}_2$ with mean $\mathbf{m} = \mathbb{E}_P[\mathbf{d}]$, the mean constraint in $\mathcal{D}_2$ requires:
+\begin{equation}
+(\mathbf{m} - \boldsymbol{\mu})^\top \boldsymbol{\Sigma}^{-1} (\mathbf{m} - \boldsymbol{\mu}) \leq \delta_1.
+\end{equation}
+Additionally, the covariance constraint requires:
+\begin{equation}
+\mathbb{E}_P[(\mathbf{d} - \boldsymbol{\mu})(\mathbf{d} - \boldsymbol{\mu})^\top] \preceq \delta_2 \boldsymbol{\Sigma}.
+\end{equation}
+Let $\operatorname{Cov}_P(\mathbf{d})$ denote the covariance matrix of $\mathbf{d}$ under distribution $P$. Since $\mathbb{E}_P[(\mathbf{d} - \boldsymbol{\mu})(\mathbf{d} - \boldsymbol{\mu})^\top] = \operatorname{Cov}_P(\mathbf{d}) + (\mathbf{m} - \boldsymbol{\mu})(\mathbf{m} - \boldsymbol{\mu})^\top$ and $\operatorname{Cov}_P(\mathbf{d}) \succeq 0$ (covariance matrices are positive semidefinite), we have:
+\begin{equation}
+(\mathbf{m} - \boldsymbol{\mu})(\mathbf{m} - \boldsymbol{\mu})^\top \preceq \mathbb{E}_P[(\mathbf{d} - \boldsymbol{\mu})(\mathbf{d} - \boldsymbol{\mu})^\top] \preceq \delta_2 \boldsymbol{\Sigma}.
+\end{equation}
+This matrix inequality implies that for any vector $\mathbf{v} \in \mathbb{R}^N$:
+\begin{equation}
+\mathbf{v}^\top (\mathbf{m} - \boldsymbol{\mu})(\mathbf{m} - \boldsymbol{\mu})^\top \mathbf{v} \leq \mathbf{v}^\top (\delta_2 \boldsymbol{\Sigma}) \mathbf{v}.
+\end{equation}
+Taking $\mathbf{v} = \boldsymbol{\Sigma}^{-1/2} \mathbf{u}$ for any $\mathbf{u} \in \mathbb{R}^N$, we obtain:
+\begin{equation}
+\mathbf{u}^\top \boldsymbol{\Sigma}^{-1/2} (\mathbf{m} - \boldsymbol{\mu})(\mathbf{m} - \boldsymbol{\mu})^\top \boldsymbol{\Sigma}^{-1/2} \mathbf{u} \leq \delta_2 \mathbf{u}^\top \mathbf{u}.
+\end{equation}
+In particular, choosing $\mathbf{u} = \boldsymbol{\Sigma}^{1/2} (\mathbf{m} - \boldsymbol{\mu})$ yields:
+\begin{equation}
+(\mathbf{m} - \boldsymbol{\mu})^\top \boldsymbol{\Sigma}^{-1} (\mathbf{m} - \boldsymbol{\mu}) \leq \delta_2.
+\end{equation}
+Combining this with the mean constraint $(\mathbf{m} - \boldsymbol{\mu})^\top \boldsymbol{\Sigma}^{-1} (\mathbf{m} - \boldsymbol{\mu}) \leq \delta_1$, we obtain:
+\begin{equation}
+(\mathbf{m} - \boldsymbol{\mu})^\top \boldsymbol{\Sigma}^{-1} (\mathbf{m} - \boldsymbol{\mu}) \leq \min\{\delta_1, \delta_2\} = \delta.
+\end{equation}
+
+\textbf{($\mathcal{M}_2 \subseteq \mathcal{M}_1$):} We now show that for any $\mathbf{m} \in \mathcal{M}_2$, there exists a distribution $P \in \mathcal{D}_2$ with mean $\mathbf{m}$.
+
+For any such $\mathbf{m}$, consider the degenerate distribution $P_{\mathbf{m}}$ that places all probability mass at $\mathbf{d} = \mathbf{m}$. For this distribution:
+\begin{itemize}
+    \item $\mathbb{E}_{P_{\mathbf{m}}}[\mathbf{d}] = \mathbf{m}$, which satisfies the mean constraint since $(\mathbf{m} - \boldsymbol{\mu})^\top \boldsymbol{\Sigma}^{-1} (\mathbf{m} - \boldsymbol{\mu}) \leq \delta \leq \delta_1$.
+    \item $\operatorname{Cov}_{P_{\mathbf{m}}}(\mathbf{d}) = 0$.
+    \item $\mathbb{E}_{P_{\mathbf{m}}}[(\mathbf{d} - \boldsymbol{\mu})(\mathbf{d} - \boldsymbol{\mu})^\top] = (\mathbf{m} - \boldsymbol{\mu})(\mathbf{m} - \boldsymbol{\mu})^\top \preceq \delta \boldsymbol{\Sigma} \preceq \delta_2 \boldsymbol{\Sigma}$.
+\end{itemize}
+Therefore, $P_{\mathbf{m}} \in \mathcal{D}_2$ with mean $\mathbf{m}$, which establishes that $\mathbf{m} \in \mathcal{M}_1$.
+
+This completes the proof of both directions, establishing that $\mathcal{M}_1 = \mathcal{M}_2$.
+\end{proof}
+
+For any fixed assignment decision $\mathbf{x}$, define the workload vector $\mathbf{w} = [w_1, w_2, \ldots, w_N]^\top$ where $w_i = \sum_{j \in N} r_{ij} x_{ij}$.
+
+\begin{theorem}\label{thm:d2_obj_reform}
+For the ambiguity set $\mathcal{D}_2$, the worst-case expected objective function can be exactly reformulated as:
+\begin{equation}
+\sup_{P \in \mathcal{D}_2} \mathbb{E}_P\left[\sum_{j \in N} \sum_{i \in N} \widetilde{d}_i r_{ij} x_{ij}\right] = \boldsymbol{\mu}^\top \mathbf{w} + \sqrt{\delta} \sqrt{\mathbf{w}^\top \boldsymbol{\Sigma} \mathbf{w}},
+\end{equation}
+where $\delta = \min\{\delta_1, \delta_2\}$. Consequently, the objective function \eqref{eq:improved_obj} under $\mathcal{D}_2$ can be equivalently reformulated as:
+\begin{equation}
+\min \sum_{j \in N} \sum_{i \in N} \mu_i r_{ij} x_{ij} + \sqrt{\delta} \sqrt{\sum_{j \in N} \sum_{k \in N} \sum_{i \in N} \sum_{\ell \in N} r_{ij} r_{k\ell} \Sigma_{ik} x_{ij} x_{k\ell}}, \label{eq:improved_obj_d2}
+\end{equation}
+where $\Sigma_{ik}$ denotes the $(i,k)$-th element of $\boldsymbol{\Sigma}$.
+\end{theorem}
+
+\begin{proof}
+By Lemma \ref{lem:d2_feasible_mean}, we have $\mathcal{M}_1 = \mathcal{M}_2$, where $\mathcal{M}_1$ is the feasible mean set and $\mathcal{M}_2$ is the ellipsoid $\{\mathbf{m} \in \mathbb{R}^N : (\mathbf{m} - \boldsymbol{\mu})^\top \boldsymbol{\Sigma}^{-1} (\mathbf{m} - \boldsymbol{\mu}) \leq \delta\}$.
+
+Since the objective function $\sum_{j \in N} \sum_{i \in N} \widetilde{d}_i r_{ij} x_{ij} = \mathbf{w}^\top \widetilde{\mathbf{d}}$ is linear in $\widetilde{\mathbf{d}}$, we have $\mathbb{E}_P[\mathbf{w}^\top \widetilde{\mathbf{d}}] = \mathbf{w}^\top \mathbf{m}$ where $\mathbf{m} = \mathbb{E}_P[\mathbf{d}]$. Therefore, the worst-case expectation depends only on the feasible mean set:
+\begin{equation}
+\sup_{P \in \mathcal{D}_2} \mathbb{E}_P[\mathbf{w}^\top \widetilde{\mathbf{d}}] = \sup_{\mathbf{m} \in \mathcal{M}_1} \mathbf{w}^\top \mathbf{m} = \sup_{\mathbf{m} \in \mathcal{M}_2} \mathbf{w}^\top \mathbf{m}.
+\end{equation}
+
+To solve the optimization problem $\sup_{\mathbf{m} \in \mathcal{M}_2} \mathbf{w}^\top \mathbf{m}$, we make the change of variables $\mathbf{m} = \boldsymbol{\mu} + \boldsymbol{\Sigma}^{1/2} \mathbf{y}$, where $\boldsymbol{\Sigma}^{1/2}$ denotes the symmetric positive definite square root of $\boldsymbol{\Sigma}$. The constraint $(\mathbf{m} - \boldsymbol{\mu})^\top \boldsymbol{\Sigma}^{-1} (\mathbf{m} - \boldsymbol{\mu}) \leq \delta$ becomes:
+\begin{equation}
+\mathbf{y}^\top \boldsymbol{\Sigma}^{1/2} \boldsymbol{\Sigma}^{-1} \boldsymbol{\Sigma}^{1/2} \mathbf{y} = \mathbf{y}^\top \mathbf{y} = \|\mathbf{y}\|_2^2 \leq \delta,
+\end{equation}
+which is equivalent to $\|\mathbf{y}\|_2 \leq \sqrt{\delta}$.
+
+The objective function becomes:
+\begin{equation}
+\mathbf{m}^\top \mathbf{w} = \boldsymbol{\mu}^\top \mathbf{w} + \mathbf{y}^\top (\boldsymbol{\Sigma}^{1/2} \mathbf{w}).
+\end{equation}
+
+To maximize $\mathbf{y}^\top (\boldsymbol{\Sigma}^{1/2} \mathbf{w})$ subject to $\|\mathbf{y}\|_2 \leq \sqrt{\delta}$, we apply the Cauchy-Schwarz inequality:
+\begin{equation}
+\mathbf{y}^\top (\boldsymbol{\Sigma}^{1/2} \mathbf{w}) \leq \|\mathbf{y}\|_2 \|\boldsymbol{\Sigma}^{1/2} \mathbf{w}\|_2 \leq \sqrt{\delta} \|\boldsymbol{\Sigma}^{1/2} \mathbf{w}\|_2 = \sqrt{\delta} \sqrt{\mathbf{w}^\top \boldsymbol{\Sigma} \mathbf{w}}.
+\end{equation}
+The maximum is achieved when $\mathbf{y}$ is in the same direction as $\boldsymbol{\Sigma}^{1/2} \mathbf{w}$, i.e., when:
+\begin{equation}
+\mathbf{y}^\star = \sqrt{\delta} \frac{\boldsymbol{\Sigma}^{1/2} \mathbf{w}}{\|\boldsymbol{\Sigma}^{1/2} \mathbf{w}\|_2} = \sqrt{\delta} \frac{\boldsymbol{\Sigma}^{1/2} \mathbf{w}}{\sqrt{\mathbf{w}^\top \boldsymbol{\Sigma} \mathbf{w}}}.
+\end{equation}
+Substituting back into $\mathbf{m} = \boldsymbol{\mu} + \boldsymbol{\Sigma}^{1/2} \mathbf{y}$, we obtain the optimal mean:
+\begin{equation}
+\mathbf{m}^\star = \boldsymbol{\mu} + \sqrt{\delta} \frac{\boldsymbol{\Sigma} \mathbf{w}}{\sqrt{\mathbf{w}^\top \boldsymbol{\Sigma} \mathbf{w}}}.
+\end{equation}
+Therefore, the maximum value is:
+\begin{equation}
+\sup_{\mathbf{m} \in \mathcal{M}_2} \mathbf{w}^\top \mathbf{m} = \boldsymbol{\mu}^\top \mathbf{w} + \sqrt{\delta} \sqrt{\mathbf{w}^\top \boldsymbol{\Sigma} \mathbf{w}},
+\end{equation}
+which completes the proof.
+\end{proof}
+
+\begin{remark}\label{rem:variable_change}
+The variable change $\mathbf{m} = \boldsymbol{\mu} + \boldsymbol{\Sigma}^{1/2} \mathbf{y}$ in the proof of Theorem \ref{thm:d2_obj_reform} can be justified as follows. The constraint in $\mathcal{M}_2$ is:
+\begin{equation}
+(\mathbf{m} - \boldsymbol{\mu})^\top \boldsymbol{\Sigma}^{-1} (\mathbf{m} - \boldsymbol{\mu}) \leq \delta.
+\end{equation}
+This defines an ellipsoid centered at $\boldsymbol{\mu}$ with shape determined by $\boldsymbol{\Sigma}$. Writing it in standard form:
+\begin{equation}
+(\mathbf{m} - \boldsymbol{\mu}) \in \left\{ \mathbf{v} \in \mathbb{R}^N : \mathbf{v}^\top \boldsymbol{\Sigma}^{-1} \mathbf{v} \leq \delta \right\}.
+\end{equation}
+Since $\mathbf{v}^\top \boldsymbol{\Sigma}^{-1} \mathbf{v} = \|\boldsymbol{\Sigma}^{-1/2} \mathbf{v}\|_2^2$, the constraint is equivalent to:
+\begin{equation}
+\|\boldsymbol{\Sigma}^{-1/2} (\mathbf{m} - \boldsymbol{\mu})\|_2^2 \leq \delta,
+\end{equation}
+Defining $\mathbf{y} = \boldsymbol{\Sigma}^{-1/2} (\mathbf{m} - \boldsymbol{\mu})$, we have $\|\mathbf{y}\|_2 \leq \sqrt{\delta}$. Solving for $\mathbf{m}$ yields:
+\begin{equation}
+\mathbf{m} = \boldsymbol{\mu} + \boldsymbol{\Sigma}^{1/2} \mathbf{y}, \quad \|\mathbf{y}\|_2 \leq \sqrt{\delta},
+\end{equation}
+which transforms the ellipsoidal constraint into a simpler spherical constraint, facilitating the optimization.
+\end{remark}
+
+The reformulation \eqref{eq:improved_obj_d2} is exact and does not require approximation methods. The square root term captures the worst-case uncertainty effect, which scales with $\sqrt{\delta}$ and depends on both the covariance structure $\boldsymbol{\Sigma}$ and the assignment decisions $\mathbf{x}$ through the workload vector $\mathbf{w}$.
+
+However, reformulation \eqref{eq:improved_obj_d2} contains a square root term involving a quadratic form $\mathbf{w}^\top \boldsymbol{\Sigma} \mathbf{w}$, which introduces nonlinearity. To linearize the objective function, we introduce an auxiliary variable $t \geq 0$ and replace the objective function \eqref{eq:improved_obj_d2} with:
+\begin{equation}
+\min \sum_{j \in N} \sum_{i \in N} \mu_i r_{ij} x_{ij} + \sqrt{\delta} \cdot t, \label{eq:improved_obj_d2_linear}
+\end{equation}
+subject to the constraint that $t$ bounds the square root term:
+\begin{equation}
+t \geq \sqrt{\mathbf{w}^\top \boldsymbol{\Sigma} \mathbf{w}}. \label{eq:auxiliary_constraint}
+\end{equation}
+Since $t \geq 0$ and the square root function is monotonically increasing, constraint \eqref{eq:auxiliary_constraint} is equivalent to the second-order cone constraint:
+\begin{equation}
+\left\|\boldsymbol{\Sigma}^{1/2} \mathbf{w}\right\|_2 \leq t, \label{eq:soc_constraint}
+\end{equation}
+where $\boldsymbol{\Sigma}^{1/2}$ denotes the symmetric positive definite square root of $\boldsymbol{\Sigma}$. This reformulation transforms the nonlinear objective function into a linear one, with the quadratic relationship captured by a second-order cone constraint that can be efficiently handled by modern mixed-integer conic optimization solvers.
+
+\subsection{Reformulation of the Enhanced Balance Constraint}
+
+The enhanced balance constraint \eqref{eq:improved_balance} differs from the previous formulation in that it uses workload $\sum_{i \in N} \widetilde{d}_i r_{ij} x_{ij}$ instead of demand $\sum_{i \in N} \widetilde{d}_i x_{ij}$. Let $\mathbf{r}_j = [r_{1j}, r_{2j}, \ldots, r_{Nj}]^\top$ denote the vector of delivery distances from all basic units to district center $j$. Then, the workload can be expressed as $\sum_{i \in N} \widetilde{d}_i r_{ij} x_{ij} = \widetilde{\mathbf{d}}^\top (\mathbf{r}_j \odot \mathbf{x}_j)$, where $\odot$ denotes element-wise multiplication, i.e., $(\mathbf{r}_j \odot \mathbf{x}_j)_i = r_{ij} x_{ij}$.
+
+To reformulate this constraint, we define $\mathbf{w}_j = \mathbf{r}_j \odot \mathbf{x}_j = [r_{1j} x_{1j}, r_{2j} x_{2j}, \ldots, r_{Nj} x_{Nj}]^\top$. The constraint \eqref{eq:improved_balance} can then be rewritten as:
+
+\begin{equation}
+\inf_{P \in \mathcal{D}} P \{L \leq \widetilde{\mathbf{d}}^\top \mathbf{w}_j \le U \} \ge 1 - \gamma, \quad \forall j \in N. \label{eq:improved_balance_rewritten}
+\end{equation}
+
+Note that $\mathbf{w}_j$ depends on the decision variables $x_{ij}$ through the element-wise multiplication with $\mathbf{r}_j$. When the ambiguity set is $\mathcal{D}_1$, since all distributions in $\mathcal{D}_1$ share the same mean $\boldsymbol{\mu}$ and covariance $\boldsymbol{\Sigma}$, the mean and variance of $\widetilde{\mathbf{d}}^\top \mathbf{w}_j$ can be directly computed as:
+
+\begin{align}
+\mathbb{E}_P[\widetilde{\mathbf{d}}^\top \mathbf{w}_j] &= \boldsymbol{\mu}^\top \mathbf{w}_j = \sum_{i \in N} \mu_i r_{ij} x_{ij}, \quad \forall P \in \mathcal{D}_1, \\
+\text{Var}_P[\widetilde{\mathbf{d}}^\top \mathbf{w}_j] &= \mathbf{w}_j^\top \boldsymbol{\Sigma} \mathbf{w}_j = \sum_{i \in N} \sum_{k \in N} \Sigma_{ik} r_{ij} r_{kj} x_{ij} x_{kj}, \quad \forall P \in \mathcal{D}_1,
+\end{align}
+
+\begin{theorem}\label{thm:improved_balance_d1}
+When $\mathcal{D} = \mathcal{D}_1$, constraints \eqref{eq:improved_balance_rewritten} can be equivalently reformulated as the following constraints:
+\begin{equation}
+    \frac{\mathbf{w}_j^\top \boldsymbol{\Sigma} \mathbf{w}_j}{\mathbf{w}_j^\top \boldsymbol{\Sigma} \mathbf{w}_j + t_1^2 (\boldsymbol{\mu}^\top \mathbf{w}_j)^2} + \frac{\mathbf{w}_j^\top \boldsymbol{\Sigma} \mathbf{w}_j}{\mathbf{w}_j^\top \boldsymbol{\Sigma} \mathbf{w}_j + t_2^2 (\boldsymbol{\mu}^\top \mathbf{w}_j)^2} \le \gamma, \quad \forall j \in N, \label{eq:improved_balance_d1_reform}
+\end{equation}
+where $t_1 = 1 - \frac{L}{\boldsymbol{\mu}^\top \mathbf{w}_j}$, $t_2 = \frac{U}{\boldsymbol{\mu}^\top \mathbf{w}_j} - 1$, and $\mathbf{w}_j = \mathbf{r}_j \odot \mathbf{x}_j$.
+\end{theorem}
+
+\begin{proof}
+The proof follows directly from Theorem \ref{thm:dricc_d1} by replacing $\mathbf{x}_j$ with $\mathbf{w}_j = \mathbf{r}_j \odot \mathbf{x}_j$. 
+% The structure of the constraint remains the same, as it depends only on the mean $\boldsymbol{\mu}^\top \mathbf{w}_j$ and variance $\mathbf{w}_j^\top \boldsymbol{\Sigma} \mathbf{w}_j$ of the random variable $\widetilde{\mathbf{d}}^\top \mathbf{w}_j$.
+\end{proof}
+
+Whether using the \textbf{xxx heuristic algorithm(has not been written yet)} or the Approximate Decomposition Method (ADM) to handle the reformulated constraints for $\mathcal{D}_1$, the treatment is the same as in Section~\ref{sec:dricc}, with the only difference being that $\mathbf{x}_j$ is replaced by $\mathbf{w}_j = \mathbf{r}_j \odot \mathbf{x}_j$ throughout the process.
+
+\begin{theorem}\label{thm:improved_balance_d2}
+When $\mathcal{D} = \mathcal{D}_2$, using the ADM to approximate constraint \eqref{eq:improved_balance_rewritten}, we decompose $\gamma$ into $\gamma_a$ and $\gamma_b$ such that $\gamma_a + \gamma_b = \gamma$. The constraint \eqref{eq:improved_balance_rewritten} can be approximated by the following constraints, depending on the relationship between $\frac{\delta_1}{\delta_2}$ and $\gamma_a$, $\gamma_b$:
+
+\textbf{Case 1:} If $\frac{\delta_1}{\delta_2} \le \gamma_a$ and $\frac{\delta_1}{\delta_2} \le \gamma_b$, then:
+\begin{align}
+\boldsymbol{\mu}^\top \mathbf{w}_j - \left(\sqrt{\delta_1} + \sqrt{\frac{1 - \gamma_a}{\gamma_a} (\delta_2 - \delta_1)}\right) \sqrt{\mathbf{w}_j^\top \boldsymbol{\Sigma} \mathbf{w}_j} &\geq L, \quad \forall j \in N, \label{eq:improved_balance_d2_case1_lower} \\
+\boldsymbol{\mu}^\top \mathbf{w}_j + \left(\sqrt{\delta_1} + \sqrt{\frac{1 - \gamma_b}{\gamma_b} (\delta_2 - \delta_1)}\right) \sqrt{\mathbf{w}_j^\top \boldsymbol{\Sigma} \mathbf{w}_j} &\le U, \quad \forall j \in N. \label{eq:improved_balance_d2_case1_upper}
+\end{align}
+
+\textbf{Case 2:} If $\frac{\delta_1}{\delta_2} \le \gamma_a$ and $\frac{\delta_1}{\delta_2} > \gamma_b$, then:
+\begin{align}
+\boldsymbol{\mu}^\top \mathbf{w}_j - \left(\sqrt{\delta_1} + \sqrt{\frac{1 - \gamma_a}{\gamma_a} (\delta_2 - \delta_1)}\right) \sqrt{\mathbf{w}_j^\top \boldsymbol{\Sigma} \mathbf{w}_j} &\geq L, \quad \forall j \in N, \label{eq:improved_balance_d2_case2_lower} \\
+\boldsymbol{\mu}^\top \mathbf{w}_j + \sqrt{\frac{\delta_2}{\gamma_b}} \sqrt{\mathbf{w}_j^\top \boldsymbol{\Sigma} \mathbf{w}_j} &\le U, \quad \forall j \in N. \label{eq:improved_balance_d2_case2_upper}
+\end{align}
+
+\textbf{Case 3:} If $\frac{\delta_1}{\delta_2} > \gamma_a$ and $\frac{\delta_1}{\delta_2} \le \gamma_b$, then:
+\begin{align}
+\boldsymbol{\mu}^\top \mathbf{w}_j - \sqrt{\frac{\delta_2}{\gamma_a}} \sqrt{\mathbf{w}_j^\top \boldsymbol{\Sigma} \mathbf{w}_j} &\geq L, \quad \forall j \in N, \label{eq:improved_balance_d2_case3_lower} \\
+\boldsymbol{\mu}^\top \mathbf{w}_j + \left(\sqrt{\delta_1} + \sqrt{\frac{1 - \gamma_b}{\gamma_b} (\delta_2 - \delta_1)}\right) \sqrt{\mathbf{w}_j^\top \boldsymbol{\Sigma} \mathbf{w}_j} &\le U, \quad \forall j \in N. \label{eq:improved_balance_d2_case3_upper}
+\end{align}
+
+\textbf{Case 4:} If $\frac{\delta_1}{\delta_2} > \gamma_a$ and $\frac{\delta_1}{\delta_2} > \gamma_b$, then:
+\begin{align}
+\boldsymbol{\mu}^\top \mathbf{w}_j - \sqrt{\frac{\delta_2}{\gamma_a}} \sqrt{\mathbf{w}_j^\top \boldsymbol{\Sigma} \mathbf{w}_j} &\geq L, \quad \forall j \in N, \label{eq:improved_balance_d2_case4_lower} \\
+\boldsymbol{\mu}^\top \mathbf{w}_j + \sqrt{\frac{\delta_2}{\gamma_b}} \sqrt{\mathbf{w}_j^\top \boldsymbol{\Sigma} \mathbf{w}_j} &\le U, \quad \forall j \in N, \label{eq:improved_balance_d2_case4_upper}
+\end{align}
+
+where $\mathbf{w}_j = \mathbf{r}_j \odot \mathbf{x}_j$.
+\end{theorem}
+
+\begin{proof}
+The proof follows directly from Theorem \ref{thm:dricc_d2_adm} by replacing $\mathbf{x}_j$ with $\mathbf{w}_j = \mathbf{r}_j \odot \mathbf{x}_j$. 
+% The reformulation structure remains identical, as it depends only on the statistical properties (mean and variance) of the workload random variable $\widetilde{\mathbf{d}}^\top \mathbf{w}_j$.
+\end{proof}
+
+Similarly, whether using the \textbf{xxx heuristic algorithm(has not been written yet)} or the Approximate Decomposition Method (ADM) to handle the reformulated constraints for $\mathcal{D}_2$, the treatment is the same as in Section~\ref{sec:dricc}, with the only difference being that $\mathbf{x}_j$ is replaced by $\mathbf{w}_j = \mathbf{r}_j \odot \mathbf{x}_j$ throughout the process.
+
+For both $\mathcal{D}_1$ and $\mathcal{D}_2$, whether using the \textbf{xxx heuristic algorithm(has not been written yet)} or the Approximate Decomposition Method (ADM), we can directly apply \textbf{the corresponding algorithmic framework(has not been written yet)} from Section~\ref{sec:dricc} to solve the improved model.
+
+
+\subsection{Solution Stability Constraint}
+
+In practical last-mile delivery operations, frequent changes to territory assignments can be disruptive and costly. When re-optimizing the territory design, it is desirable to maintain continuity with the previous solution to minimize operational disruption, reduce retraining costs, and preserve courier familiarity with their assigned areas.
+
+To incorporate this consideration, we introduce a solution stability constraint that ensures the new solution does not deviate too significantly from the previous solution. Let $\mathcal{S}^0$ denote the set of all index pairs $(i,j)$ for which $x_{ij} = 1$ in the previous (reference) solution, i.e., $\mathcal{S}^0 = \{(i,j) \in N \times N : x_{ij}^0 = 1\}$, where $x_{ij}^0$ represents the binary decision variable from the reference solution. The cardinality of $\mathcal{S}^0$, denoted by $|\mathcal{S}^0|$, equals the number of assignment relationships in the previous solution, which is exactly $|N|$ since each basic unit is assigned to exactly one district center.
+
+To limit the extent of changes from the reference solution, we impose the following constraint:
+
+\begin{equation}
+\sum_{(i,j) \in \mathcal{S}^0} x_{ij} \geqslant |\mathcal{S}^0| - \Delta, \label{eq:stability_constraint}
+\end{equation}
+
+where $\Delta \geq 0$ is a parameter that controls the maximum number of assignment relationships from the previous solution that can be changed. This constraint requires that at least $|\mathcal{S}^0| - \Delta$ of the original assignment relationships are preserved in the new solution. Equivalently, at most $\Delta$ assignment pairs $(i,j)$ that were active in the previous solution (i.e., $(i,j) \in \mathcal{S}^0$) can become inactive in the new solution (i.e., $x_{ij} = 0$).
+
+The constraint in \eqref{eq:stability_constraint} provides a direct and intuitive way to control solution stability. By setting $\Delta$ appropriately, decision makers can balance the trade-off between solution quality and operational continuity. A smaller value of $\Delta$ enforces stricter adherence to the previous solution, while a larger value allows more flexibility for optimization. This formulation is particularly advantageous as it directly constrains the preservation of existing assignment relationships, making it easier to interpret and calibrate in practice.
+
+Regarding the impact on problem scale, the stability constraint in \eqref{eq:stability_constraint} has minimal effect on the problem's complexity. Since the constraint involves only a linear combination of binary decision variables $x_{ij}$ with constant coefficients, it adds only a single linear constraint to the model. And this linearity ensures that it can be handled directly without requiring additional reformulation or approximation techniques.
+
+As for the impact of parameter $\Delta$ on solution quality and computational performance, the choice of $\Delta$ plays a crucial role in balancing solution stability and optimization flexibility. When $\Delta$ is set to ensure moderate solution changes, the constraint can actually improve computational performance in some cases, as it effectively prunes a large portion of the feasible region that would otherwise need to be explored. However, if $\Delta$ is set too small (i.e., requiring very strict adherence to the previous solution), the constraint may become overly restrictive, potentially leading to infeasibility or suboptimal solutions. Therefore, the parameter $\Delta$ should be chosen carefully to balance between solution stability and optimization flexibility while maintaining reasonable computational tractability.
+
+% To incorporate this consideration, we introduce a solution stability constraint that limits the number of basic units that are reassigned to different districts compared to a reference solution. Let $x_{ij}^0$ denote the binary decision variable from the previous (reference) solution, where $x_{ij}^0 = 1$ if basic unit $i$ was assigned to district center $j$ in the reference solution, and $x_{ij}^0 = 0$ otherwise.
+
+% The number of basic units that are reassigned can be measured as:
+
+% \begin{equation}
+% \sum_{i \in N} \sum_{j \in N} |x_{ij} - x_{ij}^0| = \sum_{i \in N} \sum_{j \in N} (x_{ij} + x_{ij}^0 - 2 x_{ij} x_{ij}^0).
+% \end{equation}
+
+% This equality holds because $x_{ij}$ and $x_{ij}^0$ are binary variables. For binary variables, the absolute difference $|x_{ij} - x_{ij}^0|$ can be expressed as $x_{ij} + x_{ij}^0 - 2 x_{ij} x_{ij}^0$, which can be verified by checking all four possible cases: (i) if $x_{ij} = 0$ and $x_{ij}^0 = 0$, then $|0 - 0| = 0 = 0 + 0 - 2 \cdot 0 \cdot 0$; (ii) if $x_{ij} = 0$ and $x_{ij}^0 = 1$, then $|0 - 1| = 1 = 0 + 1 - 2 \cdot 0 \cdot 1$; (iii) if $x_{ij} = 1$ and $x_{ij}^0 = 0$, then $|1 - 0| = 1 = 1 + 0 - 2 \cdot 1 \cdot 0$; (iv) if $x_{ij} = 1$ and $x_{ij}^0 = 1$, then $|1 - 1| = 0 = 1 + 1 - 2 \cdot 1 \cdot 1$.
+
+% Since $x_{ij}$ and $x_{ij}^0$ are binary variables, and each basic unit $i$ is assigned to exactly one district in both solutions, the above expression simplifies. Let $\Delta$ denote the maximum number of basic units that can be reassigned. The stability constraint can be formulated as:
+
+% \begin{equation}
+% \sum_{i \in N} \sum_{j \in N} (x_{ij} + x_{ij}^0 - 2 x_{ij} x_{ij}^0) \leq 2\Delta. \label{eq:stability_constraint}
+% \end{equation}
+
+% Alternatively, since $\sum_{j \in N} x_{ij} = 1$ and $\sum_{j \in N} x_{ij}^0 = 1$ for all $i \in N$, we have:
+
+% \begin{equation}
+% \sum_{i \in N} \sum_{j \in N} (x_{ij} + x_{ij}^0 - 2 x_{ij} x_{ij}^0) = 2|N| - 2\sum_{i \in N} \sum_{j \in N} x_{ij} x_{ij}^0 = 2\sum_{i \in N} \left(1 - \sum_{j \in N} x_{ij} x_{ij}^0\right).
+% \end{equation}
+
+% The term $\sum_{j \in N} x_{ij} x_{ij}^0$ equals 1 if basic unit $i$ remains assigned to the same district center in both solutions, and 0 otherwise. Therefore, $\sum_{i \in N} (1 - \sum_{j \in N} x_{ij} x_{ij}^0)$ counts the number of reassigned basic units. The stability constraint can thus be equivalently written as:
+
+% \begin{equation}
+% \sum_{i \in N} \left(1 - \sum_{j \in N} x_{ij} x_{ij}^0\right) \leq \Delta. \label{eq:stability_constraint_simplified}
+% \end{equation}
+
+% This constraint ensures that at most $\Delta$ basic units are reassigned compared to the reference solution, thereby maintaining solution stability and operational continuity.
+
+\subsection{Complete Model Formulation with Stability Constraint}
+
+Incorporating the solution stability constraint \eqref{eq:stability_constraint} into the enhanced distributionally robust chance-constrained territory design model, the complete model formulation is as follows:
+
+\begin{align}
+&\min \sup_{P \in \mathcal{D}} \mathbb{E}_P\left[\sum_{j \in N} \sum_{i \in N} \widetilde{d}_i r_{ij} x_{ij}\right] \label{eq:complete_obj} \\
+&\text{s.t.} \quad \sum_{j \in N} x_{ij} = 1, && \forall i \in N \label{eq:complete_assign} \\
+&\quad \sum_{j \in N} x_{jj} = p, \label{eq:complete_districts} \\
+&\quad \inf_{P \in \mathcal{D}} P\left\{ L \leq \sum_{i \in N} \widetilde{d}_i r_{ij} x_{ij} \leq U \right\} \geq 1 - \gamma, && \forall j \in N \label{eq:complete_balance} \\
+&\quad \sum_{i \in \cup_{v\in S}(N_v\setminus S)} x_{ij} - \sum_{i \in S} x_{ij} \ge 1 - |S|, && \forall j \in N, S \subset [N \setminus (N_j \cup \{j\})] \label{eq:complete_connectivity} \\
+&\quad \sum_{(i,j) \in \mathcal{S}^0} x_{ij} \geqslant |\mathcal{S}^0| - \Delta, \label{eq:complete_stability} \\
+&\quad x_{ij} \in \{0,1\}, && \forall i,j \in N \label{eq:complete_binary}
+\end{align}
+
+The model \eqref{eq:complete_obj}--\eqref{eq:complete_binary} extends the enhanced model by incorporating the solution stability constraint \eqref{eq:complete_stability}. This complete model is particularly suitable for scenarios where territory re-optimization is required due to changes in the operational environment, such as substantial shifts in demand patterns, expansion or contraction of service areas, introduction of new distribution centers, or persistent workload imbalances. In such situations, while re-partitioning is necessary to maintain operational efficiency, it is desirable to minimize disruption to existing operations. By controlling the parameter $\Delta$, decision makers can balance between solution quality and operational continuity according to their specific needs.
+
+Since the stability constraint is linear and does not introduce additional nonlinearity to the problem structure, the reformulation approaches and solution algorithms discussed in the previous sections remain applicable.
+
+\begin{remark}
+This section presents three key improvements to the distributionally robust chance-constrained territory design model. First, workload measurement is enhanced by incorporating delivery distance, leading to a more realistic representation of courier effort. Second, the objective function is transformed from compactness optimization to worst-case expected total workload minimization, better aligning with operational goals. Third, solution stability constraints are introduced to maintain operational continuity during re-optimization. The enhanced balance constraints are reformulated using the same theoretical framework as the original model, with workload replacing demand in the constraint expressions. The SAA method is applied to handle the min-sup objective function, and tractable reformulations are provided for both ambiguity sets $\mathcal{D}_1$ and $\mathcal{D}_2$. These improvements collectively enhance the model's practical applicability while maintaining computational tractability.
+\end{remark}
+
+\section{Experimental Validation and Analysis}
+
+This section presents the experimental validation and analysis of the delivery territory design problem. First, we introduce the experimental dataset used for testing. Then, we conduct out-of-sample performance tests and analyses for the three models introduced previously. Through the results and further examination, we comprehensively evaluate the strengths and weaknesses of different models in solving the delivery territory design problem.
+
+All experiments in this section were implemented in Java, with Gurobi V10.0.3 used as the optimization solver. The computational experiments were conducted on a laptop equipped with an Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz 1.80GHz processor and 8GB RAM.
+
+\subsection{Test Instances and Parameter Description}
+\subsubsection{Benchmark Instances from Literature}
+
+The test data consist of 80 classical benchmark instances publicly available online (http://yalma.fime.uanl.mx/\textasciitilde roger/ftp/tdp). These instances have been widely used in the literature \cite{ref23, ref24, ref28} for model and algorithm validation. In particular, \cite{ref24} provides the exact optimal solutions for these 80 instances under specific parameter settings, which are used in this study for comparative analysis. The 80 instances are divided into five groups as follows:
+
+\begin{itemize}
+    \item $n = 60$ (number of basic units), $p = 4$ (number of districts), number of instances: 20;
+    \item $n = 80$, $p = 5$, number of instances: 20;
+    \item $n = 100$, $p = 6$, number of instances: 20;
+    \item $n = 150$, $p = 8$, number of instances: 10;
+    \item $n = 200$, $p = 11$, number of instances: 10.
+\end{itemize}
+
+Each instance file records the coordinates of the basic units’ centroids, the corresponding demand data, and the adjacency relationships among the units. The Euclidean distance between centroids is used as the distance between any two basic units.
+
+\subsubsection{Parameter Description}
+
+The benchmark instances already contain all the parameters required for the deterministic model of the delivery territory design problem (see \textbf{Section~2.2} for details). However, for the scenario-based approximation and the distributionally robust chance-constrained models, additional stochastic demand information is required. Specifically, the former requires scenario-based demand realizations, while the latter requires the mean vector and covariance matrix of the demand distribution. Therefore, this study randomly generates multiple demand scenarios using different parameter settings to test various algorithms.
+
+We assume that the demand $d$ of each basic unit follows a uniform distribution within the interval $\left[a, b\right]$. Let $E[d]$ denote the mean demand and $\mathrm{RSD}[d]$ denote the relative standard deviation. By controlling these two parameters, we can determine the range and variability of the demand. The endpoints of the uniform distribution are given by:
+\begin{equation}
+a = E[d] \cdot \left(1 - \sqrt{3} \cdot \mathrm{RSD}[d]\right), \quad
+b = E[d] \cdot \left(1 + \sqrt{3} \cdot \mathrm{RSD}[d]\right).
+\end{equation}
+In this section, the mean demand is fixed at $E[d] = 50$, and different values of $\mathrm{RSD}[d]$ are used to control the demand variability.
+
+In addition, for the chance-constrained delivery territory design problem, two key parameters significantly affect the algorithmic performance: the upper bound $U$ of the total delivery demand in each district, and the risk level $\gamma$ that represents the acceptable probability of violating the demand constraint. In the experiments, we set
+\begin{equation}
+U = (1 + \alpha) \cdot \frac{D}{p},
+\end{equation}
+where $D$ is the total demand across all basic units and $p$ is the number of districts. The coefficient $\alpha$ thus controls the delivery capacity limit, enabling us to investigate how different values of $U$ influence the solution performance.
+
+Table~\ref{tab:params} summarizes all experimental parameters and their corresponding values.
+
+\begin{table}[H]
+\centering
+\caption{Parameter Settings for Scenario Generation}
+\label{tab:params}
+\begin{tabular}{lll}
+\toprule
+\textbf{Parameter} & \textbf{Description} & \textbf{Values} \\
+\midrule
+$n$ & Number of basic units & 60, 80, 100, 150, 200 \\
+$p$ & Number of districts & 4, 5, 6, 8, 11 \\
+$\mathrm{RSD}$ & Relative standard deviation & 0.125, 0.25, 0.5 \\
+$\alpha$ & Capacity upper bound coefficient & 0.1, 0.2, 0.3 \\
+$\gamma$ & Risk level of chance constraint & 0.1, 0.2, 0.3 \\
+$|\Omega|$ & Number of demand scenarios & 500, 1000, 5000 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsubsection{Out-of-Sample Performance Analysis}
+Out-of-sample performance serves as a crucial indicator for assessing a model’s ability to handle unseen scenarios, directly reflecting its reliability in practical applications. We evaluate the robustness of each model by calculating the constraint satisfaction rate under 1000 newly generated test scenarios, with results summarized in Table~\ref{tab:outsample}.
+
+\begin{table}[H]
+\centering
+\caption{Comparison of Average Out-of-Sample Performance across Four Models}
+\label{tab:outsample}
+\resizebox{\textwidth}{!}{
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Metric} & \textbf{DRICC-D1} & \textbf{DRICC-D2} & \textbf{DRJCC-D1} & \textbf{CC Model} \\
+\midrule
+Average Out-of-Sample Performance & 0.9758 & 0.9998 & 1.0000 & 0.8521 \\
+RSD = 0.125 & 0.9971 & 0.9999 & 1.0000 & 0.8866 \\
+RSD = 0.25 & 0.9700 & 0.9996 & 1.0000 & 0.8434 \\
+RSD = 0.5 & 0.9212 & -- & -- & 0.8043 \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+
+
+In terms of out-of-sample performance, the distributionally robust models demonstrate their core advantage. The DRJCC-D1 model achieves perfect robustness, with all feasible solutions maintaining a 100\% satisfaction rate across test scenarios. The DRICC-D2 model performs nearly as well, achieving an average satisfaction rate of 99.98\%. The DRICC-D1 model also exhibits strong robustness, with an average satisfaction rate of 97.58\%. These results provide compelling evidence of the effectiveness of distributionally robust optimization in generating solutions that remain resilient against unseen perturbations. 
+
+In contrast, the scenario-based CC Model performs significantly worse, with an average satisfaction rate of only 85.21\%. This indicates that solutions derived from the CC Model have approximately a 15\% probability of violating capacity constraints when exposed to new demand scenarios not present in the training data.
+
+Increasing RSD negatively impacts the out-of-sample performance of all models, with the degradation being most pronounced for the less robust CC Model. As RSD increases from 0.125 to 0.5, its performance declines from 88.66\% to 80.43\%. The DRICC-D1 model also shows a decrease, from near-perfect robustness to 92.12\%. However, both DRICC-D2 and DRJCC-D1 maintain almost perfect out-of-sample performance even when RSD = 0.25, once again underscoring their superior robustness.
+
+Therefore, for decision-makers who prioritize risk aversion and seek to ensure that the delivery territory design scheme remains feasible under future operational uncertainties, the distributionally robust models-particularly DRJCC-D1 and DRICC-D2-represent the most reliable and preferable choice.
+
+
+
+
+\appendix
+\section{Example Appendix Section}
+\label{app1}
+
+Appendix text.
+
+%% For citations use: 
+%%       \citet{<label>} ==> Lamport (1994)
+%%       \citep{<label>} ==> (Lamport, 1994)
+%%
+Example citation, See \citet{lamport94}.
+
+%% If you have bib database file and want bibtex to generate the
+%% bibitems, please use
+%%
+%%  \bibliographystyle{elsarticle-harv} 
+%%  \bibliography{<your bibdatabase>}
+
+%% else use the following coding to input the bibitems directly in the
+%% TeX file.
+
+%% Refer following link for more details about bibliography and citations.
+%% https://en.wikibooks.org/wiki/LaTeX/Bibliography_Management
+
+\begin{thebibliography}{00}
+
+%% For authoryear reference style
+%% \bibitem[Author(year)]{label}
+%% Text of bibliographic item
+
+\bibitem[Lamport(1994)]{lamport94}
+  Leslie Lamport,
+  \textit{\LaTeX: a document preparation system},
+  Addison Wesley, Massachusetts,
+  2nd edition,
+  1994.
+
+\end{thebibliography}
+\end{document}
+
+\endinput
+%%
+%% End of file `elsarticle-template-harv.tex'.
+
+

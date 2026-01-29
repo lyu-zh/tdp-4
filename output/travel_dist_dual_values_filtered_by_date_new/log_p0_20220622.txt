@@ -1,0 +1,13 @@
+
+============================================================
+处理日期: 2022-06-22
+============================================================
+N=37, K=0
+使用 xi 向量过滤，可访问的点数: 4/37
+日志文件: output/travel_dist_dual_values_filtered_by_date_new/log_p0_20220622.txt
+处理日期 2022-06-22 时发生错误: / by zero
+java.lang.ArithmeticException: / by zero
+	at TSPDualExtractor.computeTravelDist(TSPDualExtractor.java:756)
+	at TSPDualExtractorBatch.processSingleDate(TSPDualExtractorBatch.java:191)
+	at TSPDualExtractorBatch.main(TSPDualExtractorBatch.java:296)
+

@@ -1,0 +1,13 @@
+InstanceName,NumUnits,NumRegions,RSD,r,gamma,Scenarios,UseD1,Delta1,Delta2,UseJointChance,UseExactMethod,UseImprovedModel,UseAssignmentDependent,AvgDistMethod,AvgDistMean,Runtime(s),Objective,OutOfSamplePerformance,SolveSuccess,StatusCode,CutIterations,FailureStage
+unique_coordinates_list_filtered.dat,671,30,0.125,0.5,0.4,1000,true,0.00,0.00,false,false,false,true,3,-1.0000,3895.489,-1.0000,-1.0000,false,9,-1,2
+unique_coordinates_list_filtered.dat,671,30,0.125,0.5,0.4,1000,false,2.00,4.00,false,false,false,true,3,-1.0000,3938.896,-1.0000,-1.0000,false,9,-1,2
+unique_coordinates_list_filtered.dat,671,30,0.125,0.5,0.3,1000,true,0.00,0.00,false,false,false,true,3,-1.0000,3926.915,-1.0000,-1.0000,false,9,-1,2
+unique_coordinates_list_filtered.dat,671,30,0.125,0.5,0.3,1000,false,2.00,4.00,false,false,false,true,3,-1.0000,3898.980,-1.0000,-1.0000,false,9,-1,2
+unique_coordinates_list_filtered.dat,671,30,0.125,0.5,0.2,1000,true,0.00,0.00,false,false,false,true,3,-1.0000,3848.261,-1.0000,-1.0000,false,9,-1,2
+unique_coordinates_list_filtered.dat,671,30,0.125,0.5,0.2,1000,false,2.00,4.00,false,false,false,true,3,-1.0000,3841.937,-1.0000,-1.0000,false,9,-1,2
+unique_coordinates_list_filtered.dat,671,30,0.125,0.5,0.1,1000,true,0.00,0.00,false,false,false,true,3,-1.0000,3830.552,-1.0000,-1.0000,false,9,-1,2
+unique_coordinates_list_filtered.dat,671,30,0.125,0.5,0.1,1000,false,2.00,4.00,false,false,false,true,3,-1.0000,3837.593,-1.0000,-1.0000,false,9,-1,2
+unique_coordinates_list_filtered.dat,671,30,0.125,0.4,0.4,1000,true,0.00,0.00,false,false,false,true,3,-1.0000,3836.089,-1.0000,-1.0000,false,9,-1,2
+unique_coordinates_list_filtered.dat,671,30,0.125,0.4,0.4,1000,false,2.00,4.00,false,false,false,true,3,-1.0000,3841.664,-1.0000,-1.0000,false,9,-1,2
+unique_coordinates_list_filtered.dat,671,30,0.125,0.4,0.3,1000,true,0.00,0.00,false,false,false,true,3,-1.0000,3835.660,-1.0000,-1.0000,false,9,-1,2
+unique_coordinates_list_filtered.dat,671,30,0.125,0.4,0.3,1000,false,2.00,4.00,false,false,false,true,3,-1.0000,3847.412,-1.0000,-1.0000,false,9,-1,2

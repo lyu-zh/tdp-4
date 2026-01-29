@@ -1,0 +1,15 @@
+InstanceName,NumUnits,NumRegions,RSD,r,gamma,Scenarios,UseD1,Delta1,Delta2,UseJointChance,UseExactMethod,UseImprovedModel,AvgDistMethod,AvgDistMean,Runtime(s),Objective,OutOfSamplePerformance,SolveSuccess,StatusCode,CutIterations,FailureStage
+GG20-3-1.dat,20,3,0.125,0.5,0.4,1000,true,0.00,0.00,false,false,true,3,251.6428,0.893,193464.9643,0.8072,true,-1,-1,0
+GG20-3-1.dat,20,3,0.125,0.5,0.4,1000,true,0.00,0.00,false,true,true,3,251.6428,0.641,193464.9643,0.8072,true,-1,4,0
+GG20-3-1.dat,20,3,0.125,0.5,0.4,1000,false,2.00,4.00,false,false,true,3,251.6428,0.744,203294.0612,0.8072,true,-1,-1,0
+GG20-3-1.dat,20,3,0.125,0.5,0.4,1000,false,2.00,4.00,false,true,true,3,251.6428,0.620,203294.0612,0.8072,true,-1,4,0
+GG20-3-1.dat,20,3,0.125,0.5,0.3,1000,true,0.00,0.00,false,false,true,3,251.6428,0.626,193464.9643,0.8072,true,-1,-1,0
+GG20-3-1.dat,20,3,0.125,0.5,0.3,1000,true,0.00,0.00,false,true,true,3,251.6428,0.607,193464.9643,0.8072,true,-1,4,0
+GG20-3-1.dat,20,3,0.125,0.5,0.3,1000,false,2.00,4.00,false,false,true,3,251.6428,0.660,220793.6627,1.0000,true,-1,-1,0
+GG20-3-1.dat,20,3,0.125,0.5,0.3,1000,false,2.00,4.00,false,true,true,3,251.6428,0.606,203294.0612,0.8072,true,-1,4,0
+GG20-3-1.dat,20,3,0.125,0.5,0.2,1000,true,0.00,0.00,false,false,true,3,251.6428,0.575,193464.9643,0.8072,true,-1,-1,0
+GG20-3-1.dat,20,3,0.125,0.5,0.2,1000,true,0.00,0.00,false,true,true,3,251.6428,0.570,193464.9643,0.8072,true,-1,4,0
+GG20-3-1.dat,20,3,0.125,0.5,0.2,1000,false,2.00,4.00,false,false,true,3,251.6428,0.727,220793.6627,1.0000,true,-1,-1,0
+GG20-3-1.dat,20,3,0.125,0.5,0.2,1000,false,2.00,4.00,false,true,true,3,251.6428,1.468,220793.6627,1.0000,true,-1,12,0
+GG20-3-1.dat,20,3,0.125,0.5,0.1,1000,true,0.00,0.00,false,false,true,3,251.6428,0.903,193464.9643,0.8072,true,-1,-1,0
+GG20-3-1.dat,20,3,0.125,0.5,0.1,1000,true,0.00,0.00,false,true,true,3,251.6428,0.847,193464.9643,0.8072,true,-1,4,0

@@ -1,0 +1,12 @@
+InstanceName,NumUnits,NumRegions,RSD,r,gamma,Scenarios,UseD1,Delta1,Delta2,UseJointChance,UseExactMethod,Runtime(s),Objective,OutOfSamplePerformance,SolveSuccess,StatusCode,CutIterations
+GG20-3-1.dat,20,3,0.125,0.4,0.3,1000,true,0.00,0.00,false,false,0.165,3884.9767,1.0000,true,-1,-1
+GG20-3-1.dat,20,3,0.125,0.4,0.3,1000,true,0.00,0.00,false,true,0.116,3676.9134,0.0130,true,-1,3
+GG20-3-1.dat,20,3,0.125,0.4,0.3,1000,false,2.00,4.00,false,false,0.130,4184.0750,1.0000,true,-1,-1
+GG20-3-1.dat,20,3,0.125,0.4,0.3,1000,false,2.00,4.00,false,true,0.669,4184.0750,1.0000,true,-1,50
+GG20-3-1.dat,20,3,0.125,0.4,0.2,1000,true,0.00,0.00,false,false,0.093,3884.9767,1.0000,true,-1,-1
+GG20-3-1.dat,20,3,0.125,0.4,0.2,1000,true,0.00,0.00,false,true,0.094,3884.9767,1.0000,true,-1,6
+GG20-3-1.dat,20,3,0.125,0.4,0.2,1000,false,2.00,4.00,false,false,3.431,4812.4955,1.0000,true,3,-1
+GG20-3-1.dat,20,3,0.125,0.4,0.2,1000,false,2.00,4.00,false,true,0.683,4184.0750,1.0000,true,-1,50
+GG20-3-1.dat,20,3,0.125,0.4,0.1,1000,true,0.00,0.00,false,false,0.102,4184.0750,1.0000,true,-1,-1
+GG20-3-1.dat,20,3,0.125,0.4,0.1,1000,true,0.00,0.00,false,true,0.094,3884.9767,1.0000,true,-1,6
+GG20-3-1.dat,20,3,0.125,0.4,0.1,1000,false,2.00,4.00,false,false,0.106,-1.0000,-1.0000,false,3,-1

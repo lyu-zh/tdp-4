@@ -1,0 +1,3 @@
+InstanceName,NumUnits,NumRegions,RSD,r,gamma,Scenarios,UseScenarioGeneration,Runtime(s),Objective,OutOfSamplePerformance
+2DU60-05-1.dat,60,4,0.125,0.1,0.3,500,false,1.276,5216.8063,0.7500
+2DU60-05-1.dat,60,4,0.125,0.1,0.3,1000,false,1.448,5216.8063,0.7500

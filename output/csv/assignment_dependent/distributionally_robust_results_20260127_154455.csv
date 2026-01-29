@@ -1,0 +1,2 @@
+InstanceName,NumUnits,NumRegions,RSD,r,gamma,Scenarios,UseD1,Delta1,Delta2,UseJointChance,UseExactMethod,UseImprovedModel,UseAssignmentDependent,AvgDistMethod,AvgDistMean,Runtime(s),Objective,OutOfSamplePerformance,SolveSuccess,StatusCode,CutIterations,FailureStage
+unique_coordinates_list_filtered_new.dat,46,3,0.125,3.0,0.4,1000,true,0.00,0.00,false,false,false,true,3,-1.0000,0.119,153.9623,1.0000,true,-1,-1,0

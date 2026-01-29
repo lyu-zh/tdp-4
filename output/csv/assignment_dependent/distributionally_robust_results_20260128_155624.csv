@@ -1,0 +1,9 @@
+InstanceName,NumUnits,NumRegions,RSD,r,gamma,Scenarios,UseD1,Delta1,Delta2,UseJointChance,UseExactMethod,UseImprovedModel,UseAssignmentDependent,AvgDistMethod,AvgDistMean,Runtime(s),Objective,OutOfSamplePerformance,SolveSuccess,StatusCode,CutIterations,FailureStage
+unique_coordinates_list_filtered_new.dat,37,3,0.125,4.0,0.4,1000,true,0.00,0.00,false,false,false,true,3,-1.0000,0.534,62.9153,1.0000,true,-1,-1,0
+unique_coordinates_list_filtered_new.dat,37,3,0.125,4.0,0.3,1000,true,0.00,0.00,false,false,false,true,3,-1.0000,3.434,-1.0000,-1.0000,false,2,-1,2
+unique_coordinates_list_filtered_new.dat,37,3,0.125,4.0,0.2,1000,true,0.00,0.00,false,false,false,true,3,-1.0000,6.484,-1.0000,-1.0000,false,2,-1,2
+unique_coordinates_list_filtered_new.dat,37,3,0.125,4.0,0.1,1000,true,0.00,0.00,false,false,false,true,3,-1.0000,12.691,-1.0000,-1.0000,false,2,-1,2
+unique_coordinates_list_filtered_new.dat,37,3,0.250,4.0,0.4,1000,true,0.00,0.00,false,false,false,true,3,-1.0000,0.274,62.9153,1.0000,true,-1,-1,0
+unique_coordinates_list_filtered_new.dat,37,3,0.250,4.0,0.3,1000,true,0.00,0.00,false,false,false,true,3,-1.0000,2.950,-1.0000,-1.0000,false,2,-1,2
+unique_coordinates_list_filtered_new.dat,37,3,0.250,4.0,0.2,1000,true,0.00,0.00,false,false,false,true,3,-1.0000,6.348,-1.0000,-1.0000,false,2,-1,2
+unique_coordinates_list_filtered_new.dat,37,3,0.250,4.0,0.1,1000,true,0.00,0.00,false,false,false,true,3,-1.0000,12.757,-1.0000,-1.0000,false,2,-1,2
