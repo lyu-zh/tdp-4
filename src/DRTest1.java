@@ -11,15 +11,15 @@ public class DRTest1 {
     public static void main(String[] args) throws Exception {
         // Experiment configuration
         double E = 50.0; // Expected value
-        double[] RSDValues = {0.125, 0.25}; // Relative standard deviation array
+        double[] RSDValues = {0.125}; // Relative standard deviation array
         double[] rValues = {10}; // Tolerance parameter values
-        double[] gammaValues = {0.1}; // Chance constraint risk parameter
+        double[] gammaValues = {0.4, 0.3, 0.2, 0.1}; // Chance constraint risk parameter
         int[] scenarioNumValues = {1000}; // Number of scenarios
         boolean[] useD1Values = {true}; // Whether to use D_1 or D_2 ambiguity set
         double[] delta1Values = {2}; // D_2 ambiguity set parameter delta1
         double[] delta2Values = {4}; // D_2 ambiguity set parameter delta2
         boolean[] useJointChanceValues = {false}; // Whether to use joint chance constraint
-        boolean[] useExactMethodValues = {true}; // Whether to use exact method or approximation
+        boolean[] useExactMethodValues = {false}; // Whether to use exact method or approximation
         boolean[] useImprovedModelValues = {false}; // Whether to use improved model (shortest path distance + workload constraint)
         int[] avgDistMethodValues = {3}; // avgDist计算方式：1=方式1（所有j到i的距离平均），2=方式2（j的k近邻平均距离的平均）
         boolean useRelativeBalanceValue = true; // Whether to use relative balance constraint
@@ -632,7 +632,7 @@ public class DRTest1 {
             int numTrainingScenarios) {
 
         // Get all CSV files from the directory (使用与训练数据相同的目录)
-        String dataDir = "output/travel_dist_dual_values_filtered_by_date_new_filled";
+        String dataDir = "data/travel_dist_dual_values_filtered_by_date_new_filled";
         File dir = new File(dataDir);
         File[] allFiles = dir.listFiles((d, name) -> name.endsWith(".csv") && name.startsWith("travel_dist_dual_values_p3"));
         

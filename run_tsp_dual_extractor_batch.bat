@@ -30,11 +30,12 @@ echo Java Version:
 java -version
 echo.
 
-REM Set classpath
+REM Set classpath (class 输出到 out，与 IntelliJ 一致)
 set GUROBI_JAR=D:\gurobi1300\win64\lib\gurobi.jar
 set JAMA_JAR=%SCRIPT_DIR%Jama-1.0.3.jar
 set SRC_DIR=%SCRIPT_DIR%src
 set OUTPUT_DIR=%SCRIPT_DIR%output
+set OUT_CLASSES=%SCRIPT_DIR%out\production\TDP
 set DATA_DIR=%SCRIPT_DIR%data
 
 REM Check if required files exist
@@ -51,13 +52,14 @@ if not exist "%JAMA_JAR%" (
 
 REM Create output directory if it doesn't exist
 if not exist "%OUTPUT_DIR%" mkdir "%OUTPUT_DIR%"
+if not exist "%OUT_CLASSES%" mkdir "%OUT_CLASSES%"
 
-REM Set classpath for compilation and execution
-set CLASSPATH=%GUROBI_JAR%;%JAMA_JAR%;%SRC_DIR%
+REM Set classpath: 编译用 out+src+jars，运行用 out+jars
+set CLASSPATH=%OUT_CLASSES%;%GUROBI_JAR%;%JAMA_JAR%;%SRC_DIR%
 
 REM Compile Java file
 echo Compiling Java files...
-javac -encoding UTF-8 -cp "%CLASSPATH%" -d "%SRC_DIR%" "%SRC_DIR%\TSPDualExtractorBatch.java"
+javac -encoding UTF-8 -cp "%CLASSPATH%" -d "%OUT_CLASSES%" "%SRC_DIR%\TSPDualExtractorBatch.java"
 
 if %errorlevel% neq 0 (
     echo [ERROR] Compilation failed! Please check error messages.
@@ -102,6 +104,7 @@ echo   - The process maintains 100%% CPU usage regardless of window state
 echo   - Processing time depends on the number of dates in demand_matrix.csv
 echo.
 
+set RUN_CP=%OUT_CLASSES%;%GUROBI_JAR%;%JAMA_JAR%
 REM Create a simple batch file to run Java
 set RUN_SCRIPT=%TEMP%\run_java_tsp_batch_%RANDOM%.bat
 (
@@ -119,7 +122,7 @@ echo echo.
 echo echo You can minimize this window - process continues at full speed.
 echo echo.
 echo REM Run Java with high priority
-echo java -Xmx4g -cp "%CLASSPATH%" TSPDualExtractorBatch
+echo java -Xmx4g -cp "%RUN_CP%" TSPDualExtractorBatch
 echo.
 echo echo.
 echo echo ========================================

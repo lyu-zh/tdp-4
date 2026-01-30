@@ -586,7 +586,7 @@ public class DistributionallyRobustAlgo {
      * 从output/travel_dist_dual_values_filtered_by_date_1目录下的全部CSV文件读取（训练数据）
      */
     private void loadAssignmentDependentData() {
-        String dataDir = "output/travel_dist_dual_values_filtered_by_date_new_filled";
+        String dataDir = "data/travel_dist_dual_values_filtered_by_date_new_filled";
         java.io.File dir = new java.io.File(dataDir);
         java.io.File[] allFiles = dir.listFiles((d, name) -> name.endsWith(".csv") && name.startsWith("travel_dist_dual_values_p3_"));
         
@@ -1945,7 +1945,13 @@ public class DistributionallyRobustAlgo {
 
             // 如果使用支撑超平面cut，需要迭代求解
             if (useRelativeBalance && useSupportingHyperplaneCuts && !useExactMethod) {
+                // gamma 越大（如 0.4）约束越松，factor 越小，SOC 可行域越大，支撑超平面外逼近需要更多 cut 才能收敛
+                // assignment-dependent 下每个区域有上下界且每轮 cut 数受限，大 gamma 时 50 次常不足
                 int maxCutIterations = 50;
+                if (useAssignmentDependent && gamma >= 0.35) {
+                    maxCutIterations = 100;
+                    System.out.println("【支撑超平面cut】assignment-dependent 且 gamma=" + gamma + " >= 0.35，将最大迭代次数设为 " + maxCutIterations);
+                }
                 int cutIteration = 0;
                 boolean converged = false;
                 double bestObjective = Double.MAX_VALUE;
