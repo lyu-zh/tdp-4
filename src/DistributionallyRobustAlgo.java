@@ -2914,8 +2914,7 @@ public class DistributionallyRobustAlgo {
         GRBLinExpr meanTerm_vjL = new GRBLinExpr();
         GRBLinExpr meanTerm_vjU = new GRBLinExpr();
         
-        if (useImprovedModel) {
-            // 改进模型：使用变量sumX
+        if (useImprovedModel) {           // 改进模型：使用变量sumX
             for (int i = 0; i < inst.getN(); i++) {
                 meanTerm_vjL.addTerm(meanVector[i] * coeff, sumX[i]);
                 meanTerm_vjL.addTerm(-meanVector[i], w_j[i]);
