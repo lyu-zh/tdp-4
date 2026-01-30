@@ -13,7 +13,7 @@ public class DRTest1 {
         double E = 50.0; // Expected value
         double[] RSDValues = {0.125, 0.25}; // Relative standard deviation array
         double[] rValues = {10}; // Tolerance parameter values
-        double[] gammaValues = {0.4, 0.3, 0.2, 0.1}; // Chance constraint risk parameter
+        double[] gammaValues = {0.1}; // Chance constraint risk parameter
         int[] scenarioNumValues = {1000}; // Number of scenarios
         boolean[] useD1Values = {true}; // Whether to use D_1 or D_2 ambiguity set
         double[] delta1Values = {2}; // D_2 ambiguity set parameter delta1
