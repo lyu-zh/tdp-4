@@ -3,5 +3,8 @@ data/merged_orders_by_date_location.csv
 data/test/merged_orders_by_date_location.csv
 data/delivery_2023-11-19_reorganized.csv
 
+# 忽略 output 文件夹中的所有变化
+output/
+
 # 可选：其他大体积数据若不想上传可取消注释
 # data/*.csv

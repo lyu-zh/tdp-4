@@ -1,7 +1,0 @@
-InstanceName,NumUnits,NumRegions,RSD,r,gamma,Scenarios,UseD1,Delta1,Delta2,UseJointChance,UseExactMethod,UseImprovedModel,AvgDistMethod,Runtime(s),Objective,OutOfSamplePerformance,SolveSuccess,StatusCode,CutIterations,FailureStage
-GG20-3-1.dat,20,3,0.125,0.5,0.4,1000,true,0.00,0.00,false,false,true,1,0.723,243189.4954,0.9784,true,-1,-1,0
-GG20-3-1.dat,20,3,0.125,0.5,0.4,1000,true,0.00,0.00,false,false,true,2,0.401,-1.0000,-1.0000,false,12,-1,4
-GG20-3-1.dat,20,3,0.125,0.5,0.4,1000,true,0.00,0.00,false,true,true,1,5.930,243189.4954,0.9784,true,-1,38,0
-GG20-3-1.dat,20,3,0.125,0.5,0.4,1000,true,0.00,0.00,false,true,true,2,1.651,243189.4954,0.9074,true,-1,38,0
-GG20-3-1.dat,20,3,0.125,0.5,0.4,1000,false,2.00,4.00,false,false,true,1,1.728,266326.0242,1.0000,true,-1,-1,0
-GG20-3-1.dat,20,3,0.125,0.5,0.4,1000,false,2.00,4.00,false,false,true,2,1.847,263921.9908,1.0000,true,-1,-1,0

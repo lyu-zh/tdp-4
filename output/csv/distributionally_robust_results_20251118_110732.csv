@@ -1,2 +1,0 @@
-InstanceName,NumUnits,NumRegions,RSD,gamma,Scenarios,UseD1,Delta1,Delta2,UseJointChance,Runtime(s),Objective,OutOfSamplePerformance
-GG100-6-1.dat,100,6,0.125,0.3,1000,true,0.00,0.00,false,2.963,16020.0380,0.9590

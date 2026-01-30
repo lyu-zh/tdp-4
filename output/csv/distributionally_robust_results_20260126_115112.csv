@@ -1,2 +1,0 @@
-InstanceName,NumUnits,NumRegions,RSD,r,gamma,Scenarios,UseD1,Delta1,Delta2,UseJointChance,UseExactMethod,UseImprovedModel,UseAssignmentDependent,AvgDistMethod,AvgDistMean,Runtime(s),Objective,OutOfSamplePerformance,SolveSuccess,StatusCode,CutIterations,FailureStage
-GG1000-20-5.dat,1000,20,0.125,0.5,0.4,1000,true,0.00,0.00,false,false,false,false,3,-1.0000,25.172,85918.9644,1.0000,true,-1,-1,0
