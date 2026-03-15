@@ -236,12 +236,12 @@ public class TSPDualExtractorBatch {
             System.out.println("将对 demand_matrix.csv 中的所有日期进行迭代计算\n");
             
             // 参数设置
-            String pointsFile = "data/test/unique_coordinates_list_filtered_new.csv";
-            String centersFile = "data/test/selected_centers_filtered_new_p3.csv";
-            String demandMatrixFile = "data/test/demand_matrix_filtered_new.csv";
+            String pointsFile = "data/test/selected_low_ratio_points_top20.csv";
+            String centersFile = "data/test/selected_centers_low_ratio_p3.csv";
+            String demandMatrixFile = "data/test/demand_matrix_low_ratio.csv";
             
             // 创建输出目录
-            String outputDir = "output/travel_dist_dual_values_filtered_by_date_new";
+            String outputDir = "output/travel_dist_dual_values_filtered_by_date_low_ratio";
             File dir = new File(outputDir);
             if (!dir.exists()) {
                 dir.mkdirs();

@@ -99,8 +99,8 @@ def csv_to_dat(csv_file_path, dat_file_path, k=30):
 if __name__ == "__main__":
     # 设置文件路径 - 使用相对路径
     # 假设脚本在 data_process 目录下，CSV 文件在 data/test 目录下
-    csv_file = "../data/test/unique_coordinates_list_filtered_new.csv"
-    dat_file = "../data/test/unique_coordinates_list_filtered_new.dat"
+    csv_file = "../data/test/selected_low_ratio_points_top20.csv"
+    dat_file = "../data/test/selected_low_ratio_points_top20.dat"
     
     # 转换为绝对路径
     script_dir = os.path.dirname(os.path.abspath(__file__))

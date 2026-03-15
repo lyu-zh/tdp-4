@@ -127,7 +127,7 @@ echo.
 echo echo.
 echo echo ========================================
 echo echo Batch processing completed!
-echo echo Output files: %OUTPUT_DIR%\travel_dist_dual_values_by_date\travel_dist_dual_values_p*_*.csv
+echo echo Output files: %OUTPUT_DIR%\travel_dist_dual_values_by_date\travel_dist_dual_values_p^^*_^^*.csv
 echo echo ========================================
 echo pause
 ) > "%RUN_SCRIPT%"

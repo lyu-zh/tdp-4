@@ -6,6 +6,13 @@
     "configurations": [
         {
             "type": "java",
+            "name": "DRTest1",
+            "request": "launch",
+            "mainClass": "DRTest1",
+            "projectName": "TDP-pre-4_31e54368"
+        },
+        {
+            "type": "java",
             "name": "Current File",
             "request": "launch",
             "mainClass": "${file}"

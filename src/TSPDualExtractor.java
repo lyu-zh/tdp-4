@@ -68,8 +68,10 @@ public class TSPDualExtractor {
             String[] parts = line.split(",");
             if (parts.length >= 3) {
                 try {
-                    points.add(new Point(Integer.parseInt(parts[0].trim()), 
-                                       Double.parseDouble(parts[1].trim()), 
+                    // 第一列支持整数或浮点（如 70 或 70.0），统一转为 int
+                    int id = (int) Double.parseDouble(parts[0].trim());
+                    points.add(new Point(id,
+                                       Double.parseDouble(parts[1].trim()),
                                        Double.parseDouble(parts[2].trim())));
                 } catch (Exception e) {}
             }
@@ -711,6 +713,9 @@ public class TSPDualExtractor {
                                                double[][] distMatrix, int[] xi, GRBEnv env, String logFile) {
         int n = allPoints.size();
         int k = centers.size();
+        if (k == 0) {
+            throw new IllegalArgumentException("区域数 K=0：中心点文件为空或格式有误（第一列须为整数或浮点数，如 70 或 70.0）");
+        }
         
         // 如果提供了环境，使用它；否则创建新的环境
         GRBEnv originalEnv = TSPDualExtractor.env;
@@ -959,9 +964,9 @@ public class TSPDualExtractor {
             env.start();
 
             // 参数设置
-            String pointsFile = "data/test/unique_coordinates_list_filtered_new.csv";
-            String centersFile = "data/test/selected_centers_filtered_new_p3.csv";
-            String demandMatrixFile = "data/test/demand_matrix_filtered_new.csv";
+            String pointsFile = "data/test/selected_low_ratio_points_top20.csv";
+            String centersFile = "data/test/selected_centers_low_ratio_p3.csv";
+            String demandMatrixFile = "data/test/demand_matrix_low_ratio.csv";
             String targetDate = "2023-09-03"; // 目标日期：2023年9月3日
             
             // 读取数据

@@ -31,11 +31,11 @@ PROJECT_ROOT = os.path.dirname(SCRIPT_DIR)  # 项目根目录 (TDP-pre-5)
 # 数据文件存储在项目根目录下的 data/test 文件夹中
 DATA_DIR = os.path.join(PROJECT_ROOT, 'data', 'test')
 # 输出目录在项目根目录下的 output 文件夹中
-OUTPUT_DIR = os.path.join(PROJECT_ROOT, 'output', 'travel_dist_dual_values_filtered_by_date_new')
-OUTPUT_FILLED_DIR = os.path.join(PROJECT_ROOT, 'output', 'travel_dist_dual_values_filtered_by_date_new_filled')
+OUTPUT_DIR = os.path.join(PROJECT_ROOT, 'data', 'travel_dist_dual_values_filtered_by_date_low_ratio')
+OUTPUT_FILLED_DIR = os.path.join(PROJECT_ROOT, 'data', 'travel_dist_dual_values_filtered_by_date_low_ratio_filled')
 
-COORDS_FILE = os.path.join(DATA_DIR, 'unique_coordinates_list_filtered_new.csv')
-CENTERS_FILE = os.path.join(DATA_DIR, 'selected_centers_filtered_new_p3.csv')
+COORDS_FILE = os.path.join(DATA_DIR, 'selected_low_ratio_points_top20.csv')
+CENTERS_FILE = os.path.join(DATA_DIR, 'selected_centers_low_ratio_p3.csv')
 
 # 全局变量，用于多进程共享
 DIST_MATRIX = None

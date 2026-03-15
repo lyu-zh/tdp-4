@@ -15,8 +15,8 @@ project_root = os.path.dirname(script_dir)  # 项目根目录（data_process的�
 data_dir = os.path.join(project_root, 'data', 'test')
 
 # 文件路径
-input_file = os.path.join(data_dir, 'unique_coordinates_list_filtered_new.csv')
-output_file = os.path.join(data_dir, 'selected_centers_filtered_new_p3.csv')
+input_file = os.path.join(data_dir, 'selected_low_ratio_points_top20.csv')
+output_file = os.path.join(data_dir, 'selected_centers_low_ratio_p3.csv')
 
 print("=" * 80)
 print("K-means聚类分析")

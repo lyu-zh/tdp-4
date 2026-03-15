@@ -67,7 +67,7 @@ def create_demand_matrix(input_file, output_file=None, index_file=None):
         script_dir = os.path.dirname(os.path.abspath(__file__))
         parent_dir = os.path.dirname(script_dir)
         # 默认查找 data/test/unique_coordinates_list_filtered.csv，如果不存在则查找 data/unique_coordinates_list.csv
-        default_index_file1 = os.path.join(parent_dir, "data", "test", "unique_coordinates_list_filtered_new.csv")
+        default_index_file1 = os.path.join(parent_dir, "data", "test", "selected_low_ratio_points_top20.csv")
         default_index_file2 = os.path.join(parent_dir, "data", "unique_coordinates_list.csv")
         
         if os.path.exists(default_index_file1):
@@ -280,13 +280,13 @@ if __name__ == "__main__":
     parent_dir = os.path.dirname(script_dir)
     
     # 输入文件：可以根据需要修改
-    input_file = os.path.join(parent_dir, "data", "test", "merged_orders_by_date_location_filtered_new.csv")
+    input_file = os.path.join(parent_dir, "data", "test", "merged_orders_by_date_location_low_ratio.csv")
     
     # 可选：指定序号文件（如果为None，将自动查找）
     index_file = None  # 例如: os.path.join(parent_dir, "data", "test", "unique_coordinates_list_filtered.csv")
     
     # 可选：指定输出文件（如果为None，将使用默认路径）
-    output_file = os.path.join(parent_dir, "data", "test", "demand_matrix_filtered_new.csv")  # 例如: os.path.join(parent_dir, "data", "demand_matrix_filtered.csv")
+    output_file = os.path.join(parent_dir, "data", "test", "demand_matrix_low_ratio.csv")  # 例如: os.path.join(parent_dir, "data", "demand_matrix_filtered.csv")
     
     # 检查输入文件是否存在
     if not os.path.exists(input_file):

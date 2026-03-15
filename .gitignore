@@ -1,3 +1,7 @@
+# 只关注 src 目录：仅忽略根目录下的其他文件夹，根目录下的文件不忽略
+/*/
+!/src/
+
 # 超过 GitHub 100MB 限制的大文件（不纳入版本库）
 data/merged_orders_by_date_location.csv
 data/test/merged_orders_by_date_location.csv
@@ -13,6 +17,8 @@ out/
 output/
 
 .idea/workspace.xml
+
+data_process/base_point_sets_visualization/
 
 # 可选：其他大体积数据若不想上传可取消注释
 # data/*.csv

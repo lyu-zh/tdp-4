@@ -12,7 +12,7 @@ public class DRTest1 {
         // Experiment configuration
         double E = 50.0; // Expected value
         double[] RSDValues = {0.125}; // Relative standard deviation array
-        double[] rValues = {10}; // Tolerance parameter values
+        double[] rValues = {1, 0.5, 0.3, 0.2, 0.1}; // Tolerance parameter values
         double[] gammaValues = {0.4, 0.3, 0.2, 0.1}; // Chance constraint risk parameter
         int[] scenarioNumValues = {1000}; // Number of scenarios
         boolean[] useD1Values = {true}; // Whether to use D_1 or D_2 ambiguity set
@@ -24,7 +24,7 @@ public class DRTest1 {
         int[] avgDistMethodValues = {3}; // avgDist计算方式：1=方式1（所有j到i的距离平均），2=方式2（j的k近邻平均距离的平均）
         boolean useRelativeBalanceValue = true; // Whether to use relative balance constraint
         boolean useSupportingHyperplaneCutsValue = true; // Whether to use supporting-hyperplane cuts for relative balance (heuristic)
-        boolean useAssignmentDependentValue = true; // Whether to use assignment-dependent workload model
+        boolean useAssignmentDependentValue = false; // Whether to use assignment-dependent workload model
         long seed = 12345678; // Random seed
 
         long testSeed = seed + 1000;
@@ -67,7 +67,7 @@ public class DRTest1 {
             ArrayList<File> instanceFiles = new ArrayList<>();
             if (useAssignmentDependentValue) {
                 // Assignment-dependent model: use data/test/unique_coordinates_list_filtered.dat
-                File instanceFile = new File("./data/test/unique_coordinates_list_filtered_new.dat");
+                File instanceFile = new File("./data/test/selected_low_ratio_points_top20.dat");
                 if (instanceFile.exists()) {
                     instanceFiles.add(instanceFile);
                     System.out.println("找到assignment-dependent模型数据文件: " + instanceFile.getName());
@@ -632,7 +632,7 @@ public class DRTest1 {
             int numTrainingScenarios) {
 
         // Get all CSV files from the directory (使用与训练数据相同的目录)
-        String dataDir = "data/travel_dist_dual_values_filtered_by_date_new_filled";
+        String dataDir = "data/travel_dist_dual_values_filtered_by_date_low_ratio_filled";
         File dir = new File(dataDir);
         File[] allFiles = dir.listFiles((d, name) -> name.endsWith(".csv") && name.startsWith("travel_dist_dual_values_p3"));
         
