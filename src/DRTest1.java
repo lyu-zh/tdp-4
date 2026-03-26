@@ -4,15 +4,36 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.Random;
 
 public class DRTest1 {
+    private static class DistrictDiagnostics {
+        double minShare;
+        double q05Share;
+        double medianShare;
+        double q95Share;
+        double maxShare;
+        int lowerViolations;
+        int upperViolations;
+        double minMargin;
+        double medianMargin;
+    }
+
+    private static class AssignmentDependentDiagnostics {
+        int totalScenarios;
+        int satisfiedScenarios;
+        double lowerBoundShare;
+        double upperBoundShare;
+        DistrictDiagnostics[] districtStats;
+    }
+
     public static void main(String[] args) throws Exception {
         // Experiment configuration
         double E = 50.0; // Expected value
         double[] RSDValues = {0.125}; // Relative standard deviation array
-        double[] rValues = {1, 0.5, 0.3, 0.2, 0.1}; // Tolerance parameter values
+        double[] rValues = {0.5, 0.4, 0.3}; // Tolerance parameter values
         double[] gammaValues = {0.4, 0.3, 0.2, 0.1}; // Chance constraint risk parameter
         int[] scenarioNumValues = {1000}; // Number of scenarios
         boolean[] useD1Values = {true}; // Whether to use D_1 or D_2 ambiguity set
@@ -24,7 +45,7 @@ public class DRTest1 {
         int[] avgDistMethodValues = {3}; // avgDist计算方式：1=方式1（所有j到i的距离平均），2=方式2（j的k近邻平均距离的平均）
         boolean useRelativeBalanceValue = true; // Whether to use relative balance constraint
         boolean useSupportingHyperplaneCutsValue = true; // Whether to use supporting-hyperplane cuts for relative balance (heuristic)
-        boolean useAssignmentDependentValue = false; // Whether to use assignment-dependent workload model
+        boolean useAssignmentDependentValue = true; // Whether to use assignment-dependent workload model
         long seed = 12345678; // Random seed
 
         long testSeed = seed + 1000;
@@ -46,6 +67,9 @@ public class DRTest1 {
         } else {
             outputCSVPath = "./output/csv/distributionally_robust_results_" + timestamp + ".csv";
         }
+        String diagnosticsCSVPath = useAssignmentDependentValue
+                ? outputCSVPath.replace(".csv", "_diagnostics.csv")
+                : null;
         
         // Create output directory if it doesn't exist
         File outputDir = new File(outputCSVPath).getParentFile();
@@ -56,8 +80,15 @@ public class DRTest1 {
         System.out.println("CSV文件将保存到: " + outputCSVPath);
         System.out.println("实验开始时间: " + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
 
-        // Prepare CSV file
+        BufferedWriter diagnosticsWriter = null;
         try (BufferedWriter csvWriter = new BufferedWriter(new FileWriter(outputCSVPath))) {
+            if (diagnosticsCSVPath != null) {
+                diagnosticsWriter = new BufferedWriter(new FileWriter(diagnosticsCSVPath));
+                diagnosticsWriter.write("InstanceName,RSD,r,gamma,UseD1,Delta1,Delta2,UseJointChance,UseExactMethod,Objective,OutOfSamplePerformance,TotalScenarios,SatisfiedScenarios,LowerBoundShare,UpperBoundShare,DistrictIndex,ZoneMembers,MinShare,Q05Share,MedianShare,Q95Share,MaxShare,LowerViolations,UpperViolations,MinMargin,MedianMargin");
+                diagnosticsWriter.newLine();
+                diagnosticsWriter.flush();
+                System.out.println("诊断CSV文件将保存到: " + diagnosticsCSVPath);
+            }
             // Write CSV header
             csvWriter.write("InstanceName,NumUnits,NumRegions,RSD,r,gamma,Scenarios,UseD1,Delta1,Delta2,UseJointChance,UseExactMethod,UseImprovedModel,UseAssignmentDependent,AvgDistMethod,AvgDistMean,Runtime(s),Objective,OutOfSamplePerformance,SolveSuccess,StatusCode,CutIterations,FailureStage");
             csvWriter.newLine();
@@ -66,13 +97,13 @@ public class DRTest1 {
             // Get instance files based on model type
             ArrayList<File> instanceFiles = new ArrayList<>();
             if (useAssignmentDependentValue) {
-                // Assignment-dependent model: use data/test/unique_coordinates_list_filtered.dat
-                File instanceFile = new File("./data/test/selected_low_ratio_points_top20.dat");
+                // Assignment-dependent model: use cluster20 unit instance data
+                File instanceFile = new File("./data/test/cluster20_unit_outputs/unique_coordinates_list_cluster20_unit.dat");
                 if (instanceFile.exists()) {
                     instanceFiles.add(instanceFile);
                     System.out.println("找到assignment-dependent模型数据文件: " + instanceFile.getName());
                 } else {
-                    System.out.println("未找到assignment-dependent模型数据文件: ./data/test/unique_coordinates_list_filtered_new.dat");
+                    System.out.println("未找到assignment-dependent模型数据文件: ./data/test/cluster20_unit_outputs/unique_coordinates_list_cluster20_unit.dat");
                     return;
                 }
             } else {
@@ -90,7 +121,7 @@ public class DRTest1 {
                 for (File file : allFiles) {
                     String fileName = file.getName();
                     // 匹配GG20-和GG50-开头的文件
-                    if (fileName.startsWith("GG20")) {
+                    if (fileName.startsWith("GG50-")) {
                         instanceFiles.add(file);
                         System.out.println("找到数据文件: " + fileName);
                     }
@@ -210,6 +241,22 @@ public class DRTest1 {
                                                             } catch (Exception e) {
                                                                 System.err.println("Error testing out-of-sample performance: " + e.getMessage());
                                                                 outOfSamplePerformance = -1.0;
+                                                            }
+                                                        }
+
+                                                        if (useAssignmentDependentValue && diagnosticsWriter != null
+                                                                && errorMessage == null && objectiveValue != -1
+                                                                && objectiveValue != Double.MAX_VALUE) {
+                                                            try {
+                                                                AssignmentDependentDiagnostics diagnostics =
+                                                                        collectAssignmentDependentDiagnostics(instance, algo, r);
+                                                                writeAssignmentDependentDiagnostics(
+                                                                        diagnosticsWriter, diagnostics,
+                                                                        instanceName, RSD, r, gamma, useD1,
+                                                                        0.0, 0.0, useJointChance, useExactMethod,
+                                                                        objectiveValue, outOfSamplePerformance, algo);
+                                                            } catch (Exception e) {
+                                                                System.err.println("Error writing assignment-dependent diagnostics: " + e.getMessage());
                                                             }
                                                         }
 
@@ -353,6 +400,22 @@ public class DRTest1 {
                                                                     }
                                                                 }
 
+                                                                if (useAssignmentDependentValue && diagnosticsWriter != null
+                                                                        && errorMessage == null && objectiveValue != -1
+                                                                        && objectiveValue != Double.MAX_VALUE) {
+                                                                    try {
+                                                                        AssignmentDependentDiagnostics diagnostics =
+                                                                                collectAssignmentDependentDiagnostics(instance, algo, r);
+                                                                        writeAssignmentDependentDiagnostics(
+                                                                                diagnosticsWriter, diagnostics,
+                                                                                instanceName, RSD, r, gamma, useD1,
+                                                                                delta1, delta2, useJointChance, useExactMethod,
+                                                                                objectiveValue, outOfSamplePerformance, algo);
+                                                                    } catch (Exception e) {
+                                                                        System.err.println("Error writing assignment-dependent diagnostics: " + e.getMessage());
+                                                                    }
+                                                                }
+
                                                                 // Get avgDistMean
                                                                 double avgDistMean = algo.getAvgDistMean();
                                                                 
@@ -402,6 +465,13 @@ public class DRTest1 {
             }
         } catch (IOException e) {
             System.err.println("Error writing results to CSV: " + e.getMessage());
+        } finally {
+            if (diagnosticsWriter != null) {
+                try {
+                    diagnosticsWriter.close();
+                } catch (IOException ignored) {
+                }
+            }
         }
 
         System.out.println("Experiment completed, results saved to " + outputCSVPath);
@@ -632,7 +702,7 @@ public class DRTest1 {
             int numTrainingScenarios) {
 
         // Get all CSV files from the directory (使用与训练数据相同的目录)
-        String dataDir = "data/travel_dist_dual_values_filtered_by_date_low_ratio_filled";
+        String dataDir = "data/travel_dist_dual_values_filtered_by_date_cluster20_unit_filled";
         File dir = new File(dataDir);
         File[] allFiles = dir.listFiles((d, name) -> name.endsWith(".csv") && name.startsWith("travel_dist_dual_values_p3"));
         
@@ -775,6 +845,236 @@ public class DRTest1 {
                 outOfSamplePerformance, satisfiedScenarios, totalTestScenarios));
 
         return outOfSamplePerformance;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static AssignmentDependentDiagnostics collectAssignmentDependentDiagnostics(
+            Instance instance,
+            DistributionallyRobustAlgo algo,
+            double r) {
+        String dataDir = "data/travel_dist_dual_values_filtered_by_date_cluster20_unit_filled";
+        File dir = new File(dataDir);
+        File[] allFiles = dir.listFiles((d, name) -> name.endsWith(".csv") && name.startsWith("travel_dist_dual_values_p3"));
+
+        if (allFiles == null || allFiles.length == 0) {
+            throw new RuntimeException("在目录 " + dataDir + " 中未找到CSV文件");
+        }
+
+        Arrays.sort(allFiles, (f1, f2) -> f1.getName().compareTo(f2.getName()));
+
+        ArrayList<Integer>[] zones = algo.getZones();
+        int p = zones.length;
+        double coeffLower = (1.0 - r) / p;
+        double coeffUpper = (1.0 + r) / p;
+
+        ArrayList<Double>[] districtShares = new ArrayList[p];
+        ArrayList<Double>[] districtMargins = new ArrayList[p];
+        int[] lowerViolations = new int[p];
+        int[] upperViolations = new int[p];
+        for (int j = 0; j < p; j++) {
+            districtShares[j] = new ArrayList<>();
+            districtMargins[j] = new ArrayList<>();
+        }
+
+        int satisfiedScenarios = 0;
+        int totalScenarios = 0;
+
+        for (File testFile : allFiles) {
+            double[][] testScenarioData = loadAssignmentDependentDataFromCSV(testFile, instance.getN());
+            if (testScenarioData == null || testScenarioData.length == 0) {
+                continue;
+            }
+
+            totalScenarios++;
+            boolean scenarioSatisfied = true;
+
+            double totalWorkload = 0.0;
+            double[] districtWorkloads = new double[p];
+
+            for (int j = 0; j < p; j++) {
+                if (zones[j] == null || zones[j].isEmpty()) {
+                    continue;
+                }
+
+                double districtWorkload = 0.0;
+                for (int areaId : zones[j]) {
+                    if (areaId >= 0 && areaId < testScenarioData.length
+                            && testScenarioData[areaId] != null
+                            && j < testScenarioData[areaId].length) {
+                        districtWorkload += testScenarioData[areaId][j];
+                    }
+                }
+                districtWorkloads[j] = districtWorkload;
+                totalWorkload += districtWorkload;
+            }
+
+            if (totalWorkload <= 1e-12) {
+                for (int j = 0; j < p; j++) {
+                    districtShares[j].add(0.0);
+                    districtMargins[j].add(-coeffLower);
+                    lowerViolations[j]++;
+                }
+                continue;
+            }
+
+            for (int j = 0; j < p; j++) {
+                double share = districtWorkloads[j] / totalWorkload;
+                double margin = Math.min(share - coeffLower, coeffUpper - share);
+                districtShares[j].add(share);
+                districtMargins[j].add(margin);
+
+                if (share < coeffLower) {
+                    lowerViolations[j]++;
+                    scenarioSatisfied = false;
+                } else if (share > coeffUpper) {
+                    upperViolations[j]++;
+                    scenarioSatisfied = false;
+                }
+            }
+
+            if (scenarioSatisfied) {
+                satisfiedScenarios++;
+            }
+        }
+
+        AssignmentDependentDiagnostics diagnostics = new AssignmentDependentDiagnostics();
+        diagnostics.totalScenarios = totalScenarios;
+        diagnostics.satisfiedScenarios = satisfiedScenarios;
+        diagnostics.lowerBoundShare = coeffLower;
+        diagnostics.upperBoundShare = coeffUpper;
+        diagnostics.districtStats = new DistrictDiagnostics[p];
+
+        for (int j = 0; j < p; j++) {
+            diagnostics.districtStats[j] = buildDistrictDiagnostics(
+                    districtShares[j], districtMargins[j], lowerViolations[j], upperViolations[j]);
+        }
+
+        return diagnostics;
+    }
+
+    private static DistrictDiagnostics buildDistrictDiagnostics(
+            ArrayList<Double> shares,
+            ArrayList<Double> margins,
+            int lowerViolations,
+            int upperViolations) {
+        DistrictDiagnostics stats = new DistrictDiagnostics();
+        stats.lowerViolations = lowerViolations;
+        stats.upperViolations = upperViolations;
+
+        if (shares.isEmpty()) {
+            stats.minShare = Double.NaN;
+            stats.q05Share = Double.NaN;
+            stats.medianShare = Double.NaN;
+            stats.q95Share = Double.NaN;
+            stats.maxShare = Double.NaN;
+            stats.minMargin = Double.NaN;
+            stats.medianMargin = Double.NaN;
+            return stats;
+        }
+
+        double[] shareArr = toSortedArray(shares);
+        double[] marginArr = toSortedArray(margins);
+
+        stats.minShare = shareArr[0];
+        stats.q05Share = quantileFromSorted(shareArr, 0.05);
+        stats.medianShare = quantileFromSorted(shareArr, 0.50);
+        stats.q95Share = quantileFromSorted(shareArr, 0.95);
+        stats.maxShare = shareArr[shareArr.length - 1];
+        stats.minMargin = marginArr[0];
+        stats.medianMargin = quantileFromSorted(marginArr, 0.50);
+        return stats;
+    }
+
+    private static double[] toSortedArray(ArrayList<Double> values) {
+        double[] arr = new double[values.size()];
+        for (int i = 0; i < values.size(); i++) {
+            arr[i] = values.get(i);
+        }
+        Arrays.sort(arr);
+        return arr;
+    }
+
+    private static double quantileFromSorted(double[] sortedValues, double q) {
+        if (sortedValues.length == 0) {
+            return Double.NaN;
+        }
+        if (sortedValues.length == 1) {
+            return sortedValues[0];
+        }
+        int idx = (int) Math.floor(q * (sortedValues.length - 1));
+        if (idx < 0) {
+            idx = 0;
+        }
+        if (idx >= sortedValues.length) {
+            idx = sortedValues.length - 1;
+        }
+        return sortedValues[idx];
+    }
+
+    private static void writeAssignmentDependentDiagnostics(
+            BufferedWriter diagnosticsWriter,
+            AssignmentDependentDiagnostics diagnostics,
+            String instanceName,
+            double rsd,
+            double r,
+            double gamma,
+            boolean useD1,
+            double delta1,
+            double delta2,
+            boolean useJointChance,
+            boolean useExactMethod,
+            double objectiveValue,
+            double outOfSamplePerformance,
+            DistributionallyRobustAlgo algo) throws IOException {
+        ArrayList<Integer>[] zones = algo.getZones();
+        for (int j = 0; j < diagnostics.districtStats.length; j++) {
+            DistrictDiagnostics stats = diagnostics.districtStats[j];
+            diagnosticsWriter.write(String.format(
+                    "%s,%.3f,%.1f,%.1f,%s,%.2f,%.2f,%s,%s,%.4f,%.4f,%d,%d,%.4f,%.4f,%d,\"%s\",%.4f,%.4f,%.4f,%.4f,%.4f,%d,%d,%.4f,%.4f",
+                    instanceName,
+                    rsd,
+                    r,
+                    gamma,
+                    useD1 ? "true" : "false",
+                    delta1,
+                    delta2,
+                    useJointChance ? "true" : "false",
+                    useExactMethod ? "true" : "false",
+                    objectiveValue,
+                    outOfSamplePerformance,
+                    diagnostics.totalScenarios,
+                    diagnostics.satisfiedScenarios,
+                    diagnostics.lowerBoundShare,
+                    diagnostics.upperBoundShare,
+                    j,
+                    formatZoneMembers(zones[j]),
+                    stats.minShare,
+                    stats.q05Share,
+                    stats.medianShare,
+                    stats.q95Share,
+                    stats.maxShare,
+                    stats.lowerViolations,
+                    stats.upperViolations,
+                    stats.minMargin,
+                    stats.medianMargin
+            ));
+            diagnosticsWriter.newLine();
+        }
+        diagnosticsWriter.flush();
+    }
+
+    private static String formatZoneMembers(ArrayList<Integer> zone) {
+        if (zone == null || zone.isEmpty()) {
+            return "";
+        }
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < zone.size(); i++) {
+            if (i > 0) {
+                sb.append(' ');
+            }
+            sb.append(zone.get(i));
+        }
+        return sb.toString();
     }
 
     /**

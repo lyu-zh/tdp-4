@@ -1,4 +1,5 @@
 import Jama.CholeskyDecomposition;
+import Jama.EigenvalueDecomposition;
 import Jama.Matrix;
 import com.gurobi.gurobi.*;
 import copt.*;
@@ -91,8 +92,15 @@ public class DistributionallyRobustAlgo {
     private int cutIterations = -1; // 精确算法的迭代次数（如果使用精确方法）
     private int failureStage = 0;     // 失败阶段：0=成功，1=选择初始中心失败，2=生成初始解失败，3=改善初始解失败，4=确保连通性失败
     private int d1SdpNoGoodCutCounter = 0; // D1+SDP分离法下新增的no-good cut计数
+    private int d2SdpNoGoodCutCounter = 0; // D2+SDP-SOCP分离法下新增的no-good cut计数
+    private int adD1SdpNoGoodCutCounter = 0; // assignment-dependent + D1 + SDP 分离法新增 no-good cut 计数
+    private int adD2SdpNoGoodCutCounter = 0; // assignment-dependent + D2 + SDP-SOCP 分离法新增 no-good cut 计数
     private boolean d1SdpJavaCoptPathLogged = false; // 仅打印一次 Java-COPT 路径提示
+    private boolean d2SdpJavaCoptPathLogged = false; // 仅打印一次 Java-COPT 路径提示
     private copt.Envr d1SdpSharedEnvr = null; // 复用COPT环境，避免每次子问题重复打印banner
+    private copt.Envr d2SdpSharedEnvr = null; // 复用COPT环境，避免每次子问题重复打印banner
+    private double[][] d2SigmaSqrtCache = null; // D2-SDP 子问题中使用的 Sigma^(1/2) 缓存
+    private int d2SigmaSqrtCacheDim = -1;
 
     // avgDist计算方式：1=方式1（所有j到i的距离平均），2=方式2（j的k近邻平均距离的平均），3=原来的方法
     private int avgDistMethod = 1; // 默认为方式1
@@ -591,10 +599,10 @@ public class DistributionallyRobustAlgo {
      */
     /**
      * 加载assignment-dependent workload数据
-     * 从output/travel_dist_dual_values_filtered_by_date_1目录下的全部CSV文件读取（训练数据）
+     * 从 cluster20 对应目录下的全部CSV文件读取（训练数据）
      */
     private void loadAssignmentDependentData() {
-        String dataDir = "data/travel_dist_dual_values_filtered_by_date_low_ratio_filled";
+        String dataDir = "data/travel_dist_dual_values_filtered_by_date_cluster20_unit_filled";
         java.io.File dir = new java.io.File(dataDir);
         java.io.File[] allFiles = dir.listFiles((d, name) -> name.endsWith(".csv") && name.startsWith("travel_dist_dual_values_p3_"));
         
@@ -1466,7 +1474,7 @@ public class DistributionallyRobustAlgo {
      * 从CSV文件加载初始中心点（用于assignment-dependent模型）
      */
     private ArrayList<Integer> loadInitialCentersFromCSV() {
-        String csvFile = "data/test/selected_centers_low_ratio_p3.csv";
+        String csvFile = "data/test/cluster20_unit_outputs/selected_centers_test_p3.csv";
         ArrayList<Integer> centers = new ArrayList<>();
         
         try {
@@ -1944,7 +1952,7 @@ public class DistributionallyRobustAlgo {
                 }
             } else {
                 // 近似方法：直接添加DRCC约束（MISOCP）或使用支撑超平面cut
-                if (useRelativeBalance && useSupportingHyperplaneCuts && !shouldUseD1CopositiveSdpApprox()) {
+                if (useRelativeBalance && useSupportingHyperplaneCuts && !shouldUseAnyCopositiveSdpApprox()) {
                     // 使用支撑超平面cut：不直接添加SOC约束，而是迭代添加cut
                     addDistributionallyRobustConstraints(model, x); // 这会存储约束信息但不添加SOC约束
                 } else {
@@ -1957,7 +1965,7 @@ public class DistributionallyRobustAlgo {
             setObjectiveFunction(model, x);
 
             // 如果使用支撑超平面cut，需要迭代求解
-            if (useRelativeBalance && useSupportingHyperplaneCuts && !useExactMethod && !shouldUseD1CopositiveSdpApprox()) {
+            if (useRelativeBalance && useSupportingHyperplaneCuts && !useExactMethod && !shouldUseAnyCopositiveSdpApprox()) {
                 // 精确方法：模型直接包含 reformulate 后的约束（如 MIQCP），一次（或少数几次）求解即可得可行解或判不可行。
                 // 近似方法：不把 SOC 加入模型，仅用支撑超平面 cut 外逼近；需多轮“求解→检查违反→加 cut”才能收敛。
                 // assignment-dependent 时约束在 N*p 维、2*p 个 SOC，边界弯曲，外逼近所需 cut 数较多，故迭代上限要更大。
@@ -2153,6 +2161,33 @@ public class DistributionallyRobustAlgo {
                     env.dispose();
                     return false;
                 }
+            } else if (shouldUseD2CopositiveSdpApprox()) {
+                boolean ok = iterateD2SdpSeparation(model, x, globalStartTime, 100, "D2-SDP-SOCP分离");
+                if (!ok) {
+                    int status = model.get(GRB.IntAttr.Status);
+                    this.statusCode = status;
+                    model.dispose();
+                    env.dispose();
+                    return false;
+                }
+            } else if (shouldUseAssignmentDependentD1CopositiveSdpApprox()) {
+                boolean ok = iterateAssignmentDependentD1SdpSeparation(model, x, globalStartTime, 100, "AD-D1-SDP分离");
+                if (!ok) {
+                    int status = model.get(GRB.IntAttr.Status);
+                    this.statusCode = status;
+                    model.dispose();
+                    env.dispose();
+                    return false;
+                }
+            } else if (shouldUseAssignmentDependentD2CopositiveSdpApprox()) {
+                boolean ok = iterateAssignmentDependentD2SdpSeparation(model, x, globalStartTime, 100, "AD-D2-SDP-SOCP分离");
+                if (!ok) {
+                    int status = model.get(GRB.IntAttr.Status);
+                    this.statusCode = status;
+                    model.dispose();
+                    env.dispose();
+                    return false;
+                }
             } else {
                 // 直接求解模型
                 model.optimize();
@@ -2185,7 +2220,7 @@ public class DistributionallyRobustAlgo {
             }
             
             // Check time limit after optimization (对于支撑超平面cut的情况)
-            if (useRelativeBalance && useSupportingHyperplaneCuts && !useExactMethod && !shouldUseD1CopositiveSdpApprox()) {
+            if (useRelativeBalance && useSupportingHyperplaneCuts && !useExactMethod && !shouldUseAnyCopositiveSdpApprox()) {
                 if (System.currentTimeMillis() - globalStartTime > GLOBAL_TIME_LIMIT_MS) {
                     System.out.println("【生成初始解】全局时间限制已超过，停止求解");
                     int status = model.get(GRB.IntAttr.Status);
@@ -2261,7 +2296,7 @@ public class DistributionallyRobustAlgo {
      */
     private void addDistributionallyRobustConstraints(GRBModel model, GRBVar[][] x) throws GRBException {
         // 如果使用支撑超平面cut，清空之前的约束信息
-        if (useRelativeBalance && useSupportingHyperplaneCuts && !useExactMethod && !shouldUseD1CopositiveSdpApprox()) {
+        if (useRelativeBalance && useSupportingHyperplaneCuts && !useExactMethod && !shouldUseAnyCopositiveSdpApprox()) {
             relativeBalanceConstraintInfos.clear();
         }
         
@@ -2296,6 +2331,40 @@ public class DistributionallyRobustAlgo {
      */
     private boolean shouldUseD1CopositiveSdpApprox() {
         return useD1 && !useExactMethod && !useAssignmentDependent && !useImprovedModel;
+    }
+
+    /**
+     * D2 + 非assignment-dependent + 近似法 + 原始模型时，使用文档中的混合 SDP-SOCP 安全近似。
+     */
+    private boolean shouldUseD2CopositiveSdpApprox() {
+        return !useD1 && !useExactMethod && !useAssignmentDependent && !useImprovedModel;
+    }
+
+    private boolean shouldUseCopositiveSdpApprox() {
+        return shouldUseD1CopositiveSdpApprox() || shouldUseD2CopositiveSdpApprox();
+    }
+
+    /**
+     * assignment-dependent + 近似法 + 相对平衡约束时，使用 D1 的 COP+SDP 安全近似。
+     */
+    private boolean shouldUseAssignmentDependentD1CopositiveSdpApprox() {
+        return useAssignmentDependent && useRelativeBalance && useD1 && !useExactMethod;
+    }
+
+    /**
+     * assignment-dependent + 近似法 + 相对平衡约束时，使用 D2 的混合 SDP-SOCP 安全近似。
+     */
+    private boolean shouldUseAssignmentDependentD2CopositiveSdpApprox() {
+        return useAssignmentDependent && useRelativeBalance && !useD1 && !useExactMethod;
+    }
+
+    private boolean shouldUseAssignmentDependentCopositiveSdpApprox() {
+        return shouldUseAssignmentDependentD1CopositiveSdpApprox()
+                || shouldUseAssignmentDependentD2CopositiveSdpApprox();
+    }
+
+    private boolean shouldUseAnyCopositiveSdpApprox() {
+        return shouldUseCopositiveSdpApprox() || shouldUseAssignmentDependentCopositiveSdpApprox();
     }
 
     /**
@@ -2465,7 +2534,7 @@ public class DistributionallyRobustAlgo {
             d1SdpJavaCoptPathLogged = true;
         }
 
-        final int n = inst.getN();
+        final int n = v.length;
         final int dim = n + 1; // 增广矩阵维度
         RuntimeException lastException = null;
 
@@ -2623,6 +2692,575 @@ public class DistributionallyRobustAlgo {
     }
 
     /**
+     * D2 + d>=0 支撑集：主问题(Gurobi)上的外层分离循环。
+     * 每轮先解主问题，再用 COPT 解 SDP-SOCP 证书子问题验算；若违反则加 no-good cut。
+     */
+    private boolean iterateD2SdpSeparation(
+            GRBModel model,
+            GRBVar[][] x,
+            long globalStartTime,
+            int maxIterations,
+            String logTag
+    ) throws GRBException {
+        for (int it = 1; it <= maxIterations; it++) {
+            long remaining = GLOBAL_TIME_LIMIT_MS - (System.currentTimeMillis() - globalStartTime);
+            if (remaining <= 0) {
+                System.out.println("【" + logTag + "】全局时间限制已超过，停止迭代");
+                this.statusCode = model.get(GRB.IntAttr.Status);
+                return false;
+            }
+
+            double iterTimeSec = Math.max(1.0, Math.min(3600.0, remaining / 1000.0));
+            double oldLimit = model.get(GRB.DoubleParam.TimeLimit);
+            model.set(GRB.DoubleParam.TimeLimit, iterTimeSec);
+
+            System.out.println("【" + logTag + "】第 " + it + " 次迭代，求解主问题...");
+            model.optimize();
+            model.set(GRB.DoubleParam.TimeLimit, oldLimit);
+
+            int status = model.get(GRB.IntAttr.Status);
+            if (status != GRB.OPTIMAL && status != GRB.SUBOPTIMAL) {
+                System.out.println("【" + logTag + "】主问题求解失败，状态码: " + status);
+                this.statusCode = status;
+                return false;
+            }
+
+            boolean cutAdded = checkAndAddD2SdpNoGoodCut(model, x, 1e-6);
+            if (!cutAdded) {
+                System.out.println("【" + logTag + "】COPT-SDP-SOCP证书全部通过，迭代收敛");
+                return true;
+            }
+            System.out.println("【" + logTag + "】检测到SDP-SOCP违反，已添加no-good cut，继续迭代");
+        }
+
+        System.out.println("【" + logTag + "】达到最大迭代次数，仍未收敛");
+        return false;
+    }
+
+    private static class AssignmentDependentViolationVectors {
+        double[] vL;
+        double[] vU;
+    }
+
+    /**
+     * assignment-dependent 相对平衡约束下，按论文定义构建 v_{j,L}(x), v_{j,U}(x)。
+     * 向量化顺序：idx = i * p + j2，对应 d_{i,j2}。
+     */
+    private AssignmentDependentViolationVectors buildAssignmentDependentViolationVectors(double[][] xVal, int j, double coeff, double coeffUpper) {
+        int n = inst.getN();
+        int p = centers.size();
+        int nTimesP = n * p;
+
+        AssignmentDependentViolationVectors vecs = new AssignmentDependentViolationVectors();
+        vecs.vL = new double[nTimesP];
+        vecs.vU = new double[nTimesP];
+
+        for (int i = 0; i < n; i++) {
+            for (int j2 = 0; j2 < p; j2++) {
+                int idx = i * p + j2;
+                // sum_k z_k[idx] = x_{i,j2}; z_j[idx] = 1_{j2=j} * x_{i,j}
+                double sumZ = xVal[i][j2];
+                double zJ = (j2 == j) ? xVal[i][j] : 0.0;
+                vecs.vL[idx] = coeff * sumZ - zJ;
+                vecs.vU[idx] = zJ - coeffUpper * sumZ;
+            }
+        }
+        return vecs;
+    }
+
+    /**
+     * assignment-dependent + D1 + d>=0 支撑集：主问题外层分离循环。
+     */
+    private boolean iterateAssignmentDependentD1SdpSeparation(
+            GRBModel model,
+            GRBVar[][] x,
+            long globalStartTime,
+            int maxIterations,
+            String logTag
+    ) throws GRBException {
+        for (int it = 1; it <= maxIterations; it++) {
+            long remaining = GLOBAL_TIME_LIMIT_MS - (System.currentTimeMillis() - globalStartTime);
+            if (remaining <= 0) {
+                System.out.println("【" + logTag + "】全局时间限制已超过，停止迭代");
+                this.statusCode = model.get(GRB.IntAttr.Status);
+                return false;
+            }
+
+            double iterTimeSec = Math.max(1.0, Math.min(3600.0, remaining / 1000.0));
+            double oldLimit = model.get(GRB.DoubleParam.TimeLimit);
+            model.set(GRB.DoubleParam.TimeLimit, iterTimeSec);
+            System.out.println("【" + logTag + "】第 " + it + " 次迭代，求解主问题...");
+            model.optimize();
+            model.set(GRB.DoubleParam.TimeLimit, oldLimit);
+
+            int status = model.get(GRB.IntAttr.Status);
+            if (status != GRB.OPTIMAL && status != GRB.SUBOPTIMAL) {
+                System.out.println("【" + logTag + "】主问题求解失败，状态码: " + status);
+                this.statusCode = status;
+                return false;
+            }
+
+            boolean cutAdded = checkAndAddAssignmentDependentD1SdpNoGoodCut(model, x, 1e-6);
+            if (!cutAdded) {
+                System.out.println("【" + logTag + "】AD-D1 COPT-SDP证书全部通过，迭代收敛");
+                return true;
+            }
+            System.out.println("【" + logTag + "】检测到AD-D1 SDP违反，已添加no-good cut，继续迭代");
+        }
+        System.out.println("【" + logTag + "】达到最大迭代次数，仍未收敛");
+        return false;
+    }
+
+    /**
+     * assignment-dependent + D2 + d>=0 支撑集：主问题外层分离循环。
+     */
+    private boolean iterateAssignmentDependentD2SdpSeparation(
+            GRBModel model,
+            GRBVar[][] x,
+            long globalStartTime,
+            int maxIterations,
+            String logTag
+    ) throws GRBException {
+        for (int it = 1; it <= maxIterations; it++) {
+            long remaining = GLOBAL_TIME_LIMIT_MS - (System.currentTimeMillis() - globalStartTime);
+            if (remaining <= 0) {
+                System.out.println("【" + logTag + "】全局时间限制已超过，停止迭代");
+                this.statusCode = model.get(GRB.IntAttr.Status);
+                return false;
+            }
+
+            double iterTimeSec = Math.max(1.0, Math.min(3600.0, remaining / 1000.0));
+            double oldLimit = model.get(GRB.DoubleParam.TimeLimit);
+            model.set(GRB.DoubleParam.TimeLimit, iterTimeSec);
+            System.out.println("【" + logTag + "】第 " + it + " 次迭代，求解主问题...");
+            model.optimize();
+            model.set(GRB.DoubleParam.TimeLimit, oldLimit);
+
+            int status = model.get(GRB.IntAttr.Status);
+            if (status != GRB.OPTIMAL && status != GRB.SUBOPTIMAL) {
+                System.out.println("【" + logTag + "】主问题求解失败，状态码: " + status);
+                this.statusCode = status;
+                return false;
+            }
+
+            boolean cutAdded = checkAndAddAssignmentDependentD2SdpNoGoodCut(model, x, 1e-6);
+            if (!cutAdded) {
+                System.out.println("【" + logTag + "】AD-D2 COPT-SDP-SOCP证书全部通过，迭代收敛");
+                return true;
+            }
+            System.out.println("【" + logTag + "】检测到AD-D2 SDP-SOCP违反，已添加no-good cut，继续迭代");
+        }
+        System.out.println("【" + logTag + "】达到最大迭代次数，仍未收敛");
+        return false;
+    }
+
+    private boolean checkAndAddAssignmentDependentD1SdpNoGoodCut(GRBModel model, GRBVar[][] x, double tol) throws GRBException {
+        int n = inst.getN();
+        int p = centers.size();
+        double[][] xVal = new double[n][p];
+        int[] selectedJ = new int[n];
+        for (int i = 0; i < n; i++) {
+            double best = -Double.MAX_VALUE;
+            int bestJ = 0;
+            for (int j = 0; j < p; j++) {
+                xVal[i][j] = x[i][j].get(GRB.DoubleAttr.X);
+                if (xVal[i][j] > best) {
+                    best = xVal[i][j];
+                    bestJ = j;
+                }
+            }
+            selectedJ[i] = bestJ;
+        }
+        if (verifyAssignmentDependentD1SdpCertificatesByCopt(xVal, tol)) {
+            return false;
+        }
+        GRBLinExpr cutExpr = new GRBLinExpr();
+        for (int i = 0; i < n; i++) {
+            cutExpr.addTerm(1.0, x[i][selectedJ[i]]);
+        }
+        model.addConstr(cutExpr, GRB.LESS_EQUAL, n - 1, "ad_d1_sdp_nogood_" + (adD1SdpNoGoodCutCounter++));
+        return true;
+    }
+
+    private boolean checkAndAddAssignmentDependentD2SdpNoGoodCut(GRBModel model, GRBVar[][] x, double tol) throws GRBException {
+        int n = inst.getN();
+        int p = centers.size();
+        double[][] xVal = new double[n][p];
+        int[] selectedJ = new int[n];
+        for (int i = 0; i < n; i++) {
+            double best = -Double.MAX_VALUE;
+            int bestJ = 0;
+            for (int j = 0; j < p; j++) {
+                xVal[i][j] = x[i][j].get(GRB.DoubleAttr.X);
+                if (xVal[i][j] > best) {
+                    best = xVal[i][j];
+                    bestJ = j;
+                }
+            }
+            selectedJ[i] = bestJ;
+        }
+        if (verifyAssignmentDependentD2SdpCertificatesByCopt(xVal, tol)) {
+            return false;
+        }
+        GRBLinExpr cutExpr = new GRBLinExpr();
+        for (int i = 0; i < n; i++) {
+            cutExpr.addTerm(1.0, x[i][selectedJ[i]]);
+        }
+        model.addConstr(cutExpr, GRB.LESS_EQUAL, n - 1, "ad_d2_sdp_nogood_" + (adD2SdpNoGoodCutCounter++));
+        return true;
+    }
+
+    /**
+     * assignment-dependent + D1：对每个 j 验证 phi(v_{j,L}) + phi(v_{j,U}) <= gamma_j。
+     */
+    private boolean verifyAssignmentDependentD1SdpCertificatesByCopt(double[][] xVal, double tol) {
+        int p = centers.size();
+        double coeff = (1.0 - r) / p;
+        double coeffUpper = (1.0 + r) / p;
+
+        for (int j = 0; j < p; j++) {
+            double risk = useJointChance ? individualGammas[j] : gamma;
+            AssignmentDependentViolationVectors vecs = buildAssignmentDependentViolationVectors(xVal, j, coeff, coeffUpper);
+            double boundL = solveD1SdpBoundWithCopt(vecs.vL);
+            double boundU = solveD1SdpBoundWithCopt(vecs.vU);
+
+            if (Double.isNaN(boundL) || Double.isNaN(boundU) || Double.isInfinite(boundL) || Double.isInfinite(boundU)) {
+                throw new RuntimeException("AD-D1 COPT-SDP子问题返回无效值，请检查 COPT/CVXPY 环境。");
+            }
+
+            double total = boundL + boundU;
+            if (total > risk + tol) {
+                System.out.println(String.format("【AD-D1-SDP】区域%d违反: boundL=%.6f, boundU=%.6f, 合计=%.6f (阈值 %.6f)",
+                        j, boundL, boundU, total, risk));
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * assignment-dependent + D2：对每个 j 验证 phi(v_{j,L}) + phi(v_{j,U}) <= gamma_j。
+     */
+    private boolean verifyAssignmentDependentD2SdpCertificatesByCopt(double[][] xVal, double tol) {
+        int p = centers.size();
+        double coeff = (1.0 - r) / p;
+        double coeffUpper = (1.0 + r) / p;
+
+        for (int j = 0; j < p; j++) {
+            double risk = useJointChance ? individualGammas[j] : gamma;
+            AssignmentDependentViolationVectors vecs = buildAssignmentDependentViolationVectors(xVal, j, coeff, coeffUpper);
+            double boundL = solveD2SdpBoundWithCopt(vecs.vL);
+            double boundU = solveD2SdpBoundWithCopt(vecs.vU);
+
+            if (Double.isNaN(boundL) || Double.isNaN(boundU) || Double.isInfinite(boundL) || Double.isInfinite(boundU)) {
+                throw new RuntimeException("AD-D2 COPT-SDP-SOCP子问题返回无效值，请检查 COPT/CVXPY 环境。");
+            }
+
+            double total = boundL + boundU;
+            if (total > risk + tol) {
+                System.out.println(String.format("【AD-D2-SDP-SOCP】区域%d违反: boundL=%.6f, boundU=%.6f, 合计=%.6f (阈值 %.6f)",
+                        j, boundL, boundU, total, risk));
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * 检查当前解在 D2 + 支撑集 d>=0 下是否满足 SDP-SOCP 证书；若不满足，加入 no-good cut 排除该解。
+     * @return true 表示添加了 cut；false 表示当前解通过证书（无新增 cut）
+     */
+    private boolean checkAndAddD2SdpNoGoodCut(GRBModel model, GRBVar[][] x, double tol) throws GRBException {
+        int n = inst.getN();
+        int p = centers.size();
+        double[][] xVal = new double[n][p];
+        int[] selectedJ = new int[n];
+
+        for (int i = 0; i < n; i++) {
+            double best = -Double.MAX_VALUE;
+            int bestJ = 0;
+            for (int j = 0; j < p; j++) {
+                xVal[i][j] = x[i][j].get(GRB.DoubleAttr.X);
+                if (xVal[i][j] > best) {
+                    best = xVal[i][j];
+                    bestJ = j;
+                }
+            }
+            selectedJ[i] = bestJ;
+        }
+
+        if (verifyD2SdpCertificatesByCopt(xVal, tol)) {
+            return false;
+        }
+
+        GRBLinExpr cutExpr = new GRBLinExpr();
+        for (int i = 0; i < n; i++) {
+            cutExpr.addTerm(1.0, x[i][selectedJ[i]]);
+        }
+        model.addConstr(cutExpr, GRB.LESS_EQUAL, n - 1, "d2_sdp_nogood_" + (d2SdpNoGoodCutCounter++));
+        return true;
+    }
+
+    /**
+     * 用 COPT 求解文档中的 D2 混合 SDP-SOCP 证书子问题，验证当前解是否可行。
+     */
+    private boolean verifyD2SdpCertificatesByCopt(double[][] xVal, double tol) {
+        int n = inst.getN();
+        int p = centers.size();
+        double coeff = (1.0 - r) / p;
+        double coeffUpper = (1.0 + r) / p;
+
+        for (int j = 0; j < p; j++) {
+            double risk = useJointChance ? individualGammas[j] : gamma;
+
+            double[] vL = new double[n];
+            double[] vU = new double[n];
+            for (int i = 0; i < n; i++) {
+                vL[i] = coeff - xVal[i][j];
+                vU[i] = xVal[i][j] - coeffUpper;
+            }
+
+            double boundL = solveD2SdpBoundWithCopt(vL);
+            double boundU = solveD2SdpBoundWithCopt(vU);
+
+            if (Double.isNaN(boundL) || Double.isNaN(boundU) || Double.isInfinite(boundL) || Double.isInfinite(boundU)) {
+                throw new RuntimeException("COPT-SDP-SOCP子问题返回无效值，请检查 COPT/CVXPY 环境。");
+            }
+
+            double boundTotal = boundL + boundU;
+            if (boundTotal > risk + tol) {
+                System.out.println(String.format("【D2-SDP-SOCP】区域%d违反: boundL=%.6f, boundU=%.6f, 合计=%.6f (阈值 %.6f)",
+                        j, boundL, boundU, boundTotal, risk));
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * 使用 COPT Java API 计算 D2 下单个线性事件的混合 SDP-SOCP 证书上界。
+     *
+     * 目标:
+     * min y0 + mu^T y + (delta2*Sigma + mu*mu^T):M + sqrt(delta1)*s
+     * s.t.
+     *      || Sigma^(1/2) (y + 2*M*mu) ||_2 <= s         （用 LMI 形式表示）
+     *      M >= 0 (PSD)
+     *      Z - N0 >= 0
+     *      Z - E11 - lambda*Vaug - N1 >= 0
+     *      N0,N1 >= 0, lambda >= 0, s >= 0
+     */
+    private double solveD2SdpBoundWithCopt(double[] v) {
+        // d>=0 支撑集下，若 v 全为非正，则 d^T v > 0 不可能发生，最坏违约概率恒为 0。
+        boolean allNonPositive = true;
+        for (double vi : v) {
+            if (vi > 1e-12) {
+                allNonPositive = false;
+                break;
+            }
+        }
+        if (allNonPositive) {
+            return 0.0;
+        }
+
+        if (!d2SdpJavaCoptPathLogged) {
+            System.out.println("【D2-SDP-SOCP】使用 Java 直接调用 COPT API 求解混合 SDP-SOCP 子问题（路线A）");
+            d2SdpJavaCoptPathLogged = true;
+        }
+
+        final int n = v.length;
+        final int dim = n + 1; // Z 的增广矩阵维度
+        final int socDim = n + 1; // SOC 的 LMI 维度
+        final double sqrtDelta1 = Math.sqrt(Math.max(0.0, delta1));
+        final double[][] sigmaSqrt = getD2SigmaSqrtForCurrentDimension(n);
+
+        RuntimeException lastException = null;
+
+        for (int attempt = 1; attempt <= 2; attempt++) {
+            copt.Model cModel = null;
+            try {
+                copt.Envr env = getOrCreateD2SdpSharedEnvr();
+                cModel = env.createModel("d2_sdp_socp_cert");
+
+                try { cModel.setIntParam(copt.IntParam.Logging, 0); } catch (Exception ignored) {}
+                try { cModel.setIntParam(copt.IntParam.LogToConsole, 0); } catch (Exception ignored) {}
+                try { cModel.setIntParam(copt.IntParam.LogLevel, 0); } catch (Exception ignored) {}
+                try { cModel.setDblParam(copt.DblParam.TimeLimit, 30.0); } catch (Exception ignored) {}
+                try { cModel.setDblParam(copt.DblParam.FeasTol, 1e-8); } catch (Exception ignored) {}
+                try { cModel.setDblParam(copt.DblParam.MatrixTol, 1e-10); } catch (Exception ignored) {}
+                try { cModel.setIntParam(copt.IntParam.SDPMethod, attempt == 1 ? 0 : 1); } catch (Exception ignored) {}
+
+                // 变量
+                copt.Var y0 = cModel.addVar(1.0, copt.Consts.INFINITY, 0.0, copt.Consts.CONTINUOUS, "y0");
+                copt.Var[] y = new copt.Var[n];
+                for (int i = 0; i < n; i++) {
+                    y[i] = cModel.addVar(-copt.Consts.INFINITY, copt.Consts.INFINITY, 0.0, copt.Consts.CONTINUOUS, "y_" + i);
+                }
+                copt.Var lambda = cModel.addVar(0.0, copt.Consts.INFINITY, 0.0, copt.Consts.CONTINUOUS, "lambda");
+                copt.Var s = cModel.addVar(0.0, copt.Consts.INFINITY, 0.0, copt.Consts.CONTINUOUS, "s");
+
+                // M 对称自由变量（下三角建模，镜像赋值）
+                copt.Var[][] mVar = new copt.Var[dim][dim];
+                // N0/N1 对称且逐元素非负
+                copt.Var[][] n0Var = new copt.Var[dim][dim];
+                copt.Var[][] n1Var = new copt.Var[dim][dim];
+                for (int i = 0; i < dim; i++) {
+                    for (int j = i; j < dim; j++) {
+                        copt.Var mv = cModel.addVar(-copt.Consts.INFINITY, copt.Consts.INFINITY, 0.0, copt.Consts.CONTINUOUS, "m_" + i + "_" + j);
+                        mVar[i][j] = mv;
+                        mVar[j][i] = mv;
+
+                        copt.Var nv0 = cModel.addVar(0.0, copt.Consts.INFINITY, 0.0, copt.Consts.CONTINUOUS, "n0_" + i + "_" + j);
+                        n0Var[i][j] = nv0;
+                        n0Var[j][i] = nv0;
+
+                        copt.Var nv1 = cModel.addVar(0.0, copt.Consts.INFINITY, 0.0, copt.Consts.CONTINUOUS, "n1_" + i + "_" + j);
+                        n1Var[i][j] = nv1;
+                        n1Var[j][i] = nv1;
+                    }
+                }
+
+                // 目标：y0 + mu^T y + (delta2*Sigma + mu*mu^T):M + sqrt(delta1)*s
+                copt.Expr obj = new copt.Expr();
+                obj.addTerm(y0, 1.0);
+                for (int i = 0; i < n; i++) {
+                    obj.addTerm(y[i], meanVector[i]);
+                }
+                for (int i = 1; i < dim; i++) {
+                    for (int j = i; j < dim; j++) {
+                        double cij = delta2 * getCovariance(i - 1, j - 1) + meanVector[i - 1] * meanVector[j - 1];
+                        double coeff = (i == j) ? cij : 2.0 * cij;
+                        obj.addTerm(mVar[i][j], coeff);
+                    }
+                }
+                obj.addTerm(s, sqrtDelta1);
+                cModel.setObjective(obj, copt.Consts.MINIMIZE);
+
+                // 常量矩阵 E11
+                double[][] e11 = new double[dim][dim];
+                e11[0][0] = 1.0;
+                copt.SymMatrix constE11 = createSymMatrixFromDense(cModel, e11);
+
+                // 常量矩阵 -Vaug（在 LMI2 中乘以变量 lambda，得到 -lambda*Vaug）
+                double[][] minusVaug = new double[dim][dim];
+                for (int i = 1; i < dim; i++) {
+                    minusVaug[0][i] = -0.5 * v[i - 1];
+                    minusVaug[i][0] = -0.5 * v[i - 1];
+                }
+                copt.SymMatrix constMinusVaug = createSymMatrixFromDense(cModel, minusVaug);
+
+                // LMI1: Z - N0 >= 0
+                copt.LmiExpr lmi1 = new copt.LmiExpr();
+                lmi1.addTerm(y0, createBasisSymMatrix(cModel, dim, 0, 0, 1.0));
+                for (int i = 1; i < dim; i++) {
+                    lmi1.addTerm(y[i - 1], createBasisSymMatrix(cModel, dim, 0, i, 0.5));
+                }
+                for (int i = 1; i < dim; i++) {
+                    for (int j = i; j < dim; j++) {
+                        lmi1.addTerm(mVar[i][j], createBasisSymMatrix(cModel, dim, i, j, 1.0));
+                    }
+                }
+                for (int i = 0; i < dim; i++) {
+                    for (int j = i; j < dim; j++) {
+                        lmi1.addTerm(n0Var[i][j], createBasisSymMatrix(cModel, dim, i, j, -1.0));
+                    }
+                }
+                cModel.addLmiConstr(lmi1, "d2_lmi_z_minus_n0_psd");
+
+                // LMI2: Z - E11 - lambda*Vaug - N1 >= 0
+                copt.LmiExpr lmi2 = new copt.LmiExpr();
+                lmi2.addTerm(y0, createBasisSymMatrix(cModel, dim, 0, 0, 1.0));
+                for (int i = 1; i < dim; i++) {
+                    lmi2.addTerm(y[i - 1], createBasisSymMatrix(cModel, dim, 0, i, 0.5));
+                }
+                for (int i = 1; i < dim; i++) {
+                    for (int j = i; j < dim; j++) {
+                        lmi2.addTerm(mVar[i][j], createBasisSymMatrix(cModel, dim, i, j, 1.0));
+                    }
+                }
+                for (int i = 0; i < dim; i++) {
+                    for (int j = i; j < dim; j++) {
+                        lmi2.addTerm(n1Var[i][j], createBasisSymMatrix(cModel, dim, i, j, -1.0));
+                    }
+                }
+                lmi2.addConstant(new copt.SymMatExpr(constE11, -1.0));
+                lmi2.addTerm(lambda, constMinusVaug);
+                cModel.addLmiConstr(lmi2, "d2_lmi_z_minus_e11_vaug_minus_n1_psd");
+
+                // 额外约束：M >= 0 (PSD)
+                copt.LmiExpr lmiMpsd = new copt.LmiExpr();
+                for (int i = 0; i < n; i++) {
+                    for (int j = i; j < n; j++) {
+                        lmiMpsd.addTerm(mVar[i + 1][j + 1], createBasisSymMatrix(cModel, n, i, j, 1.0));
+                    }
+                }
+                cModel.addLmiConstr(lmiMpsd, "d2_lmi_m_psd");
+
+                // SOC: || Sigma^(1/2) (y + 2*M*mu) ||_2 <= s
+                // 使用等价 LMI:
+                // [ s,  w^T ]
+                // [ w,  s I ] >= 0, 其中 w = Sigma^(1/2) (y + 2*M*mu)
+                copt.LmiExpr lmiSoc = new copt.LmiExpr();
+                lmiSoc.addTerm(s, createBasisSymMatrix(cModel, socDim, 0, 0, 1.0));
+                for (int k = 1; k < socDim; k++) {
+                    lmiSoc.addTerm(s, createBasisSymMatrix(cModel, socDim, k, k, 1.0));
+                }
+                for (int k = 0; k < n; k++) {
+                    for (int i = 0; i < n; i++) {
+                        double coeffY = sigmaSqrt[k][i];
+                        if (Math.abs(coeffY) > 1e-12) {
+                            lmiSoc.addTerm(y[i], createBasisSymMatrix(cModel, socDim, 0, k + 1, coeffY));
+                        }
+                    }
+                    for (int i = 0; i < n; i++) {
+                        for (int t = 0; t < n; t++) {
+                            double coeffM = 2.0 * sigmaSqrt[k][i] * meanVector[t];
+                            if (Math.abs(coeffM) > 1e-12) {
+                                lmiSoc.addTerm(mVar[i + 1][t + 1], createBasisSymMatrix(cModel, socDim, 0, k + 1, coeffM));
+                            }
+                        }
+                    }
+                }
+                cModel.addLmiConstr(lmiSoc, "d2_lmi_soc");
+
+                cModel.solve();
+
+                int status = cModel.getIntAttr(copt.IntAttr.LpStatus);
+                int hasLpSol = cModel.getIntAttr(copt.IntAttr.HasLpSol);
+                if (status == 1) { // optimal
+                    return cModel.getDblAttr(copt.DblAttr.LpObjVal);
+                }
+                if (hasLpSol == 1) {
+                    double val = cModel.getDblAttr(copt.DblAttr.LpObjVal);
+                    System.out.println(String.format("【D2-SDP-SOCP】警告：子问题 status=%d（非最优）但 HasLpSol=1，采用当前值 %.6f", status, val));
+                    return val;
+                }
+                if (attempt == 2) {
+                    double fallback = 1.0;
+                    System.out.println(String.format("【D2-SDP-SOCP】警告：子问题 status=%d, HasLpSol=0（无解），采用保守上界 %.2f 继续", status, fallback));
+                    return fallback;
+                }
+                throw new RuntimeException("COPT子问题未达到最优状态, status=" + status + ", HasLpSol=" + hasLpSol + ", attempt=" + attempt);
+            } catch (Exception e) {
+                lastException = new RuntimeException("调用COPT求解D2-SDP-SOCP证书失败: " + e.getMessage(), e);
+                try {
+                    if (d2SdpSharedEnvr != null) {
+                        d2SdpSharedEnvr.dispose();
+                    }
+                } catch (Exception ignored) {}
+                d2SdpSharedEnvr = null;
+            } finally {
+                if (cModel != null) {
+                    try {
+                        cModel.dispose();
+                    } catch (Exception ignored) {
+                    }
+                }
+            }
+        }
+        throw lastException != null ? lastException : new RuntimeException("调用COPT求解D2-SDP-SOCP证书失败: 未知错误");
+    }
+
+    /**
      * 懒加载并复用 COPT 环境，避免每次子问题都重复初始化输出 banner。
      */
     private copt.Envr getOrCreateD1SdpSharedEnvr() throws copt.CoptException {
@@ -2635,6 +3273,84 @@ public class DistributionallyRobustAlgo {
         try { envConfig.set(copt.IntParam.LogLevel, "0"); } catch (Exception ignored) {}
         d1SdpSharedEnvr = new copt.Envr(envConfig);
         return d1SdpSharedEnvr;
+    }
+
+    /**
+     * 懒加载并复用 D2-SDP-SOCP 的 COPT 环境。
+     */
+    private copt.Envr getOrCreateD2SdpSharedEnvr() throws copt.CoptException {
+        if (d2SdpSharedEnvr != null) {
+            return d2SdpSharedEnvr;
+        }
+        copt.EnvrConfig envConfig = new copt.EnvrConfig();
+        try { envConfig.set(copt.IntParam.Logging, "0"); } catch (Exception ignored) {}
+        try { envConfig.set(copt.IntParam.LogToConsole, "0"); } catch (Exception ignored) {}
+        try { envConfig.set(copt.IntParam.LogLevel, "0"); } catch (Exception ignored) {}
+        d2SdpSharedEnvr = new copt.Envr(envConfig);
+        return d2SdpSharedEnvr;
+    }
+
+    /**
+     * 获取 D2-SDP 子问题所需的 Sigma^(1/2)，使用特征值分解构造对称平方根，并缓存结果。
+     */
+    private double[][] getD2SigmaSqrtForCurrentDimension(int n) {
+        if (d2SigmaSqrtCache != null && d2SigmaSqrtCacheDim == n) {
+            return d2SigmaSqrtCache;
+        }
+
+        double[][] sigma = new double[n][n];
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                sigma[i][j] = getCovariance(i, j);
+            }
+        }
+
+        // 数值上先对称化，避免由于浮点误差导致分解不稳定。
+        for (int i = 0; i < n; i++) {
+            for (int j = i + 1; j < n; j++) {
+                double sym = 0.5 * (sigma[i][j] + sigma[j][i]);
+                sigma[i][j] = sym;
+                sigma[j][i] = sym;
+            }
+        }
+
+        try {
+            Matrix sigmaMat = new Matrix(sigma);
+            EigenvalueDecomposition evd = new EigenvalueDecomposition(sigmaMat);
+            Matrix V = evd.getV();
+            double[] eigVals = evd.getRealEigenvalues();
+
+            double[][] sqrtDiag = new double[n][n];
+            for (int i = 0; i < n; i++) {
+                sqrtDiag[i][i] = Math.sqrt(Math.max(0.0, eigVals[i]));
+            }
+
+            Matrix sqrtSigma = V.times(new Matrix(sqrtDiag)).times(V.transpose());
+            double[][] sqrtArr = sqrtSigma.getArray();
+
+            // 对称化一次，进一步抑制数值噪声。
+            for (int i = 0; i < n; i++) {
+                for (int j = i + 1; j < n; j++) {
+                    double sym = 0.5 * (sqrtArr[i][j] + sqrtArr[j][i]);
+                    sqrtArr[i][j] = sym;
+                    sqrtArr[j][i] = sym;
+                }
+            }
+
+            d2SigmaSqrtCache = sqrtArr;
+            d2SigmaSqrtCacheDim = n;
+            return d2SigmaSqrtCache;
+        } catch (Exception ex) {
+            // 回退：用对角近似，至少保持模型可运行。
+            double[][] sqrtDiagFallback = new double[n][n];
+            for (int i = 0; i < n; i++) {
+                sqrtDiagFallback[i][i] = Math.sqrt(Math.max(0.0, sigma[i][i]));
+            }
+            d2SigmaSqrtCache = sqrtDiagFallback;
+            d2SigmaSqrtCacheDim = n;
+            System.out.println("【D2-SDP-SOCP】警告：Sigma^(1/2) 特征值分解失败，已回退到对角近似: " + ex.getMessage());
+            return d2SigmaSqrtCache;
+        }
     }
 
     /**
@@ -2872,14 +3588,14 @@ public class DistributionallyRobustAlgo {
             return;
         }
 
-        // D1 + d>=0 支撑集：采用“Gurobi主问题 + COPT求解SDP证书子问题”的分离法。
+        // D1/D2 + d>=0 支撑集：采用“Gurobi主问题 + COPT求解SDP(-SOCP)证书子问题”的分离法。
         // 此处不在主问题中直接加入SOC/SDP约束，约束由外层迭代（解主问题->COPT验算->回加cut）保证。
-        if (shouldUseD1CopositiveSdpApprox()) {
+        if (shouldUseAnyCopositiveSdpApprox()) {
             return;
         }
         
         // 如果使用支撑超平面cut且使用近似方法，则不直接添加SOC约束
-        if (useSupportingHyperplaneCuts && !useExactMethod && !shouldUseD1CopositiveSdpApprox()) {
+        if (useSupportingHyperplaneCuts && !useExactMethod && !shouldUseAnyCopositiveSdpApprox()) {
             // 计算factor并存储信息
             double gamma_a_local = 0.5 * riskParam;
             double gamma_b_local = 0.5 * riskParam;
@@ -5510,7 +6226,7 @@ public class DistributionallyRobustAlgo {
                 addDistributionallyRobustConstraints(model, x);
                 
                 // 如果使用支撑超平面cut，需要先迭代添加cut（类似generateInitialSolution中的逻辑）
-                if (useRelativeBalance && useSupportingHyperplaneCuts && !shouldUseD1CopositiveSdpApprox()) {
+                if (useRelativeBalance && useSupportingHyperplaneCuts && !shouldUseAnyCopositiveSdpApprox()) {
                     System.out.println("【确保连通性】使用支撑超平面cut，先迭代添加cut...");
                     
                     // 设置目标函数
@@ -5601,7 +6317,7 @@ public class DistributionallyRobustAlgo {
             }
 
             // 设置目标函数（如果还没有设置，或者不使用支撑超平面cut）
-            if (!(useRelativeBalance && useSupportingHyperplaneCuts && !useExactMethod && !shouldUseD1CopositiveSdpApprox())) {
+            if (!(useRelativeBalance && useSupportingHyperplaneCuts && !useExactMethod && !shouldUseAnyCopositiveSdpApprox())) {
                 setObjectiveFunction(model, x);
             }
 
@@ -5732,7 +6448,7 @@ public class DistributionallyRobustAlgo {
                     solved = solveWithExactMethodForConnectivity(model, x, env, globalStartTime, initialCutCount);
                 } else {
                     // 如果使用支撑超平面cut，需要迭代添加cut
-                    if (useRelativeBalance && useSupportingHyperplaneCuts && !shouldUseD1CopositiveSdpApprox()) {
+                    if (useRelativeBalance && useSupportingHyperplaneCuts && !shouldUseAnyCopositiveSdpApprox()) {
                         System.out.println("【确保连通性】迭代 " + iteration + "：添加连通性约束后，迭代添加支撑超平面cut...");
                         
                         // 迭代添加支撑超平面cut
@@ -5820,6 +6536,54 @@ public class DistributionallyRobustAlgo {
                     } else if (shouldUseD1CopositiveSdpApprox()) {
                         System.out.println("【确保连通性】迭代 " + iteration + "：使用 D1-SDP 分离法...");
                         boolean ok = iterateD1SdpSeparation(model, x, globalStartTime, 120, "连通性迭代-D1-SDP");
+                        if (!ok) {
+                            solved = false;
+                        } else {
+                            solved = true;
+                            for (int jj = 0; jj < centers.size(); jj++) {
+                                zones[jj] = new ArrayList<>();
+                                for (int i = 0; i < inst.getN(); i++) {
+                                    if (Math.abs(x[i][jj].get(GRB.DoubleAttr.X) - 1.0) < 1e-6) {
+                                        zones[jj].add(i);
+                                    }
+                                }
+                            }
+                        }
+                    } else if (shouldUseD2CopositiveSdpApprox()) {
+                        System.out.println("【确保连通性】迭代 " + iteration + "：使用 D2-SDP-SOCP 分离法...");
+                        boolean ok = iterateD2SdpSeparation(model, x, globalStartTime, 120, "连通性迭代-D2-SDP-SOCP");
+                        if (!ok) {
+                            solved = false;
+                        } else {
+                            solved = true;
+                            for (int jj = 0; jj < centers.size(); jj++) {
+                                zones[jj] = new ArrayList<>();
+                                for (int i = 0; i < inst.getN(); i++) {
+                                    if (Math.abs(x[i][jj].get(GRB.DoubleAttr.X) - 1.0) < 1e-6) {
+                                        zones[jj].add(i);
+                                    }
+                                }
+                            }
+                        }
+                    } else if (shouldUseAssignmentDependentD1CopositiveSdpApprox()) {
+                        System.out.println("【确保连通性】迭代 " + iteration + "：使用 AD-D1-SDP 分离法...");
+                        boolean ok = iterateAssignmentDependentD1SdpSeparation(model, x, globalStartTime, 120, "连通性迭代-AD-D1-SDP");
+                        if (!ok) {
+                            solved = false;
+                        } else {
+                            solved = true;
+                            for (int jj = 0; jj < centers.size(); jj++) {
+                                zones[jj] = new ArrayList<>();
+                                for (int i = 0; i < inst.getN(); i++) {
+                                    if (Math.abs(x[i][jj].get(GRB.DoubleAttr.X) - 1.0) < 1e-6) {
+                                        zones[jj].add(i);
+                                    }
+                                }
+                            }
+                        }
+                    } else if (shouldUseAssignmentDependentD2CopositiveSdpApprox()) {
+                        System.out.println("【确保连通性】迭代 " + iteration + "：使用 AD-D2-SDP-SOCP 分离法...");
+                        boolean ok = iterateAssignmentDependentD2SdpSeparation(model, x, globalStartTime, 120, "连通性迭代-AD-D2-SDP-SOCP");
                         if (!ok) {
                             solved = false;
                         } else {
