@@ -40,6 +40,12 @@ public class DistributionallyRobustAlgo {
     private boolean useLazyCovariance; // 是否使用延迟计算协方差（当矩阵太大时）
     private boolean useDiagonalCovariance; // 是否只使用对角线（方差），假设场景之间独立
     private int nTimesPForCovariance; // 存储N*p值，用于延迟计算
+    // 协方差数值稳定化配置：用于缓解近奇异/非PSD导致的SDP子问题不稳定（如status=3无界）
+    private boolean enableCovarianceConditioning = true;
+    private double covarianceEigenFloorRel = 1e-8;      // 特征值下限 = max(1e-9, rel * lambdaMax)
+    private double covarianceDiagonalJitterRel = 1e-10; // 对角微扰 = rel * max(lambdaMax,1)
+    private boolean enforceCovarianceCondCap = true;     // 是否按目标条件数强制抬升最小特征值
+    private double targetCovarianceCondNumber = 1e3;     // 目标条件数上限（assignment-dependent）
     private double delta1; // D_2模糊集参数
     private double delta2; // D_2模糊集参数
     private boolean useD1; // 是否使用D_1模糊集
@@ -602,7 +608,7 @@ public class DistributionallyRobustAlgo {
      * 从 cluster20 对应目录下的全部CSV文件读取（训练数据）
      */
     private void loadAssignmentDependentData() {
-        String dataDir = "data/travel_dist_dual_values_filtered_by_date_cluster20_unit_filled";
+        String dataDir = "data/travel_dist_dual_values_filtered_by_date_cluster20_unit_synth142";
         java.io.File dir = new java.io.File(dataDir);
         java.io.File[] allFiles = dir.listFiles((d, name) -> name.endsWith(".csv") && name.startsWith("travel_dist_dual_values_p3_"));
         
@@ -820,7 +826,7 @@ public class DistributionallyRobustAlgo {
         
         // 对于assignment-dependent模型，默认使用对角线简化（假设场景独立）
         // 这样可以大幅减少内存和计算复杂度
-        useDiagonalCovariance = true; // 假设场景之间独立，只计算方差
+        useDiagonalCovariance = false; // 假设场景之间独立，只计算方差
         nTimesPForCovariance = nTimesP;
         
         if (useDiagonalCovariance) {
@@ -931,6 +937,8 @@ public class DistributionallyRobustAlgo {
                     System.out.println("矩阵是半正定的");
                 }
             }
+            // 即便通过PSD检查，也做一次稳健化（近奇异仍会导致SDP/SOCP子问题数值问题）。
+            conditionCovarianceMatrixIfNeeded("assignment-dependent");
         } else if (useDiagonalCovariance) {
             System.out.println("对角线模式: 方差向量已计算完成（假设场景独立，方差自动满足半正定性）");
         } else {
@@ -1165,11 +1173,118 @@ public class DistributionallyRobustAlgo {
             System.out.println("延迟计算模式: 无法修正矩阵（矩阵未预先计算）");
             return;
         }
-        
-        // 在对角线上添加一个小的正数
-        double epsilon = 1e-5; // 略大于最小负特征值的绝对值
-        for (int i = 0; i < covarianceMatrix.length; i++) {
-            covarianceMatrix[i][i] += epsilon;
+
+        // 统一走稳健化：对称化 + PSD投影 + 对角微扰
+        conditionCovarianceMatrixIfNeeded("ensurePSDMatrix");
+    }
+
+    /**
+     * 协方差稳健化：
+     * 1) 对称化；
+     * 2) 特征值下限截断（PSD投影）；
+     * 3) 对角微扰（ridge）以降低条件数并增强数值稳定性。
+     */
+    private void conditionCovarianceMatrixIfNeeded(String tag) {
+        // 用户要求：该稳健化仅用于 assignment-dependent 模型，标准模型不启用。
+        if (!useAssignmentDependent) {
+            return;
+        }
+        if (!enableCovarianceConditioning || useLazyCovariance || useDiagonalCovariance || covarianceMatrix == null) {
+            return;
+        }
+        int n = covarianceMatrix.length;
+        if (n == 0) {
+            return;
+        }
+        try {
+            // 先对称化，避免浮点误差导致特征分解不稳定
+            for (int i = 0; i < n; i++) {
+                for (int j = i + 1; j < n; j++) {
+                    double sym = 0.5 * (covarianceMatrix[i][j] + covarianceMatrix[j][i]);
+                    covarianceMatrix[i][j] = sym;
+                    covarianceMatrix[j][i] = sym;
+                }
+            }
+
+            Matrix sigma = new Matrix(covarianceMatrix);
+            EigenvalueDecomposition evd = new EigenvalueDecomposition(sigma);
+            Matrix V = evd.getV();
+            double[] eig = evd.getRealEigenvalues();
+
+            double minEig = Double.POSITIVE_INFINITY;
+            double maxEig = Double.NEGATIVE_INFINITY;
+            for (double e : eig) {
+                if (e < minEig) minEig = e;
+                if (e > maxEig) maxEig = e;
+            }
+            double scale = Math.max(1.0, maxEig);
+            double floor = Math.max(1e-9, covarianceEigenFloorRel * scale);
+            if (enforceCovarianceCondCap && targetCovarianceCondNumber > 1.0) {
+                // 若希望 cond <= K，至少需要 lambda_min >= lambda_max / K
+                floor = Math.max(floor, maxEig / targetCovarianceCondNumber);
+            }
+            int clipped = 0;
+
+            double[][] d = new double[n][n];
+            for (int i = 0; i < n; i++) {
+                double v = eig[i];
+                if (v < floor) {
+                    v = floor;
+                    clipped++;
+                }
+                d[i][i] = v;
+            }
+
+            Matrix conditioned = V.times(new Matrix(d)).times(V.transpose());
+
+            // 二次对称化 + 对角微扰
+            double[][] arr = conditioned.getArray();
+            for (int i = 0; i < n; i++) {
+                for (int j = i + 1; j < n; j++) {
+                    double sym = 0.5 * (arr[i][j] + arr[j][i]);
+                    arr[i][j] = sym;
+                    arr[j][i] = sym;
+                }
+            }
+            double jitter = covarianceDiagonalJitterRel * scale;
+            if (jitter > 0) {
+                for (int i = 0; i < n; i++) {
+                    arr[i][i] += jitter;
+                }
+            }
+            covarianceMatrix = arr;
+
+            // 处理后特征值与条件数估计
+            Matrix sigma2 = new Matrix(covarianceMatrix);
+            EigenvalueDecomposition evd2 = new EigenvalueDecomposition(sigma2);
+            double[] eig2 = evd2.getRealEigenvalues();
+            double minEig2 = Double.POSITIVE_INFINITY;
+            double maxEig2 = Double.NEGATIVE_INFINITY;
+            for (double e : eig2) {
+                if (e < minEig2) minEig2 = e;
+                if (e > maxEig2) maxEig2 = e;
+            }
+            double condAfter = (minEig2 > 0) ? (maxEig2 / minEig2) : Double.POSITIVE_INFINITY;
+            double condBefore = (minEig > 0) ? (maxEig / minEig) : Double.POSITIVE_INFINITY;
+
+            System.out.println(String.format(
+                    "【CovConditioning-%s】n=%d, eigMinBefore=%.3e, eigMaxBefore=%.3e, condBefore=%s, clipped=%d, floor=%.3e, jitter=%.3e, eigMinAfter=%.3e, eigMaxAfter=%.3e, condAfter=%.3e, condCapEnabled=%s, condTarget=%.3e",
+                    tag,
+                    n,
+                    minEig,
+                    maxEig,
+                    Double.isFinite(condBefore) ? String.format("%.3e", condBefore) : "INF",
+                    clipped,
+                    floor,
+                    jitter,
+                    minEig2,
+                    maxEig2,
+                    condAfter,
+                    String.valueOf(enforceCovarianceCondCap),
+                    targetCovarianceCondNumber
+            ));
+        } catch (Exception e) {
+            System.out.println("【CovConditioning-" + tag + "】稳健化失败，保留原协方差矩阵: " + e.getMessage());
         }
     }
 
@@ -2654,19 +2769,20 @@ public class DistributionallyRobustAlgo {
                 int status = cModel.getIntAttr(copt.IntAttr.LpStatus);
                 int hasLpSol = cModel.getIntAttr(copt.IntAttr.HasLpSol);
                 if (status == 1) { // optimal
-                    return cModel.getDblAttr(copt.DblAttr.LpObjVal);
-                }
-                // 偶发非最优但已有可行解时，接受当前值，避免中断整轮实验
-                if (hasLpSol == 1) {
                     double val = cModel.getDblAttr(copt.DblAttr.LpObjVal);
-                    System.out.println(String.format("【D1-SDP】警告：子问题 status=%d（非最优）但 HasLpSol=1，采用当前值 %.6f", status, val));
+                    System.out.println(String.format("【D1-SDP】子问题最优: status=%d, obj=%.6f", status, val));
                     return val;
                 }
+                // 严格模式：仅接受最优解。非最优即使 HasLpSol=1 也不作为证书值使用。
+                if (hasLpSol == 1) {
+                    double val = cModel.getDblAttr(copt.DblAttr.LpObjVal);
+                    System.out.println(String.format("【D1-SDP】警告：子问题 status=%d（非最优）且 HasLpSol=1，忽略当前值 %.6f，转入重试/保守回退", status, val));
+                }
                 // status=8 通常为 COPT_LPSTATUS_INTERRUPTED（迭代/时间限制或内部中止）；2=INFEASIBLE, 5=TIMEOUT, 9=ITERLIMIT
-                // 无解时返回保守上界，使证书判为“违反”并加 cut，避免整轮实验直接失败
+                // 最终非最优时返回保守上界，使证书判为“违反”并加 cut，避免误放行
                 if (attempt == 2) {
                     double fallback = 1.0; // 大于常见 gamma，使当前解被判为违反
-                    System.out.println(String.format("【D1-SDP】警告：子问题 status=%d, HasLpSol=0（无解），采用保守上界 %.2f 继续", status, fallback));
+                    System.out.println(String.format("【D1-SDP】警告：子问题 status=%d（非最优），采用保守上界 %.2f 继续", status, fallback));
                     return fallback;
                 }
                 throw new RuntimeException("COPT子问题未达到最优状态, status=" + status + ", HasLpSol=" + hasLpSol + ", attempt=" + attempt);
@@ -2929,6 +3045,10 @@ public class DistributionallyRobustAlgo {
             }
 
             double total = boundL + boundU;
+            System.out.println(String.format(
+                    "【AD-D1-SDP】区域%d检查: boundL=%.6f, boundU=%.6f, 合计=%.6f, 阈值(gamma/risk)=%.6f, 差值(total-risk)=%.6f",
+                    j, boundL, boundU, total, risk, total - risk
+            ));
             if (total > risk + tol) {
                 System.out.println(String.format("【AD-D1-SDP】区域%d违反: boundL=%.6f, boundU=%.6f, 合计=%.6f (阈值 %.6f)",
                         j, boundL, boundU, total, risk));
@@ -2957,6 +3077,10 @@ public class DistributionallyRobustAlgo {
             }
 
             double total = boundL + boundU;
+            System.out.println(String.format(
+                    "【AD-D2-SDP-SOCP】区域%d检查: boundL=%.6f, boundU=%.6f, 合计=%.6f, 阈值(gamma/risk)=%.6f, 差值(total-risk)=%.6f",
+                    j, boundL, boundU, total, risk, total - risk
+            ));
             if (total > risk + tol) {
                 System.out.println(String.format("【AD-D2-SDP-SOCP】区域%d违反: boundL=%.6f, boundU=%.6f, 合计=%.6f (阈值 %.6f)",
                         j, boundL, boundU, total, risk));
@@ -3227,16 +3351,18 @@ public class DistributionallyRobustAlgo {
                 int status = cModel.getIntAttr(copt.IntAttr.LpStatus);
                 int hasLpSol = cModel.getIntAttr(copt.IntAttr.HasLpSol);
                 if (status == 1) { // optimal
-                    return cModel.getDblAttr(copt.DblAttr.LpObjVal);
+                    double val = cModel.getDblAttr(copt.DblAttr.LpObjVal);
+                    System.out.println(String.format("【D2-SDP-SOCP】子问题最优: status=%d, obj=%.6f", status, val));
+                    return val;
                 }
+                // 严格模式：仅接受最优解。非最优即使 HasLpSol=1 也不作为证书值使用。
                 if (hasLpSol == 1) {
                     double val = cModel.getDblAttr(copt.DblAttr.LpObjVal);
-                    System.out.println(String.format("【D2-SDP-SOCP】警告：子问题 status=%d（非最优）但 HasLpSol=1，采用当前值 %.6f", status, val));
-                    return val;
+                    System.out.println(String.format("【D2-SDP-SOCP】警告：子问题 status=%d（非最优）且 HasLpSol=1，忽略当前值 %.6f，转入重试/保守回退", status, val));
                 }
                 if (attempt == 2) {
                     double fallback = 1.0;
-                    System.out.println(String.format("【D2-SDP-SOCP】警告：子问题 status=%d, HasLpSol=0（无解），采用保守上界 %.2f 继续", status, fallback));
+                    System.out.println(String.format("【D2-SDP-SOCP】警告：子问题 status=%d（非最优），采用保守上界 %.2f 继续", status, fallback));
                     return fallback;
                 }
                 throw new RuntimeException("COPT子问题未达到最优状态, status=" + status + ", HasLpSol=" + hasLpSol + ", attempt=" + attempt);

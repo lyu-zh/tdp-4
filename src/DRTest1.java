@@ -702,7 +702,7 @@ public class DRTest1 {
             int numTrainingScenarios) {
 
         // Get all CSV files from the directory (使用与训练数据相同的目录)
-        String dataDir = "data/travel_dist_dual_values_filtered_by_date_cluster20_unit_filled";
+        String dataDir = "data/travel_dist_dual_values_filtered_by_date_cluster20_unit_synth142";
         File dir = new File(dataDir);
         File[] allFiles = dir.listFiles((d, name) -> name.endsWith(".csv") && name.startsWith("travel_dist_dual_values_p3"));
         
@@ -852,7 +852,7 @@ public class DRTest1 {
             Instance instance,
             DistributionallyRobustAlgo algo,
             double r) {
-        String dataDir = "data/travel_dist_dual_values_filtered_by_date_cluster20_unit_filled";
+        String dataDir = "data/travel_dist_dual_values_filtered_by_date_cluster20_unit_synth142";
         File dir = new File(dataDir);
         File[] allFiles = dir.listFiles((d, name) -> name.endsWith(".csv") && name.startsWith("travel_dist_dual_values_p3"));
 
