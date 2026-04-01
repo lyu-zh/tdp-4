@@ -86,8 +86,8 @@ public class DistributionallyRobustAlgo {
     private int timeLimit = 3600; // 秒（Gurobi求解器单次求解的最大时间限制，每次迭代最多3600秒）
     private int maxIterations = 100;
 
-    // 全局时间限制（整个算法运行的总时间限制，单位：毫秒）
-    private static final long GLOBAL_TIME_LIMIT_MS = 36000 * 1000; // 36000 seconds (10 hours)
+    // 全局时间限制（整个算法 run() 从进入到结束的总时间上限，单位：毫秒）
+    private static final long GLOBAL_TIME_LIMIT_MS = 3600 * 1000; // 600000 ms = 600 秒 = 10 分钟
 
     // 存储最佳目标函数值
     private double bestObjective = Double.MAX_VALUE;
@@ -449,95 +449,95 @@ public class DistributionallyRobustAlgo {
         // Step 3: 改善初始解
         double cur_value = 0.0; // 初始化cur_value，避免作用域问题
         // 只有当找到可行解时，才进行改善初始解的迭代
-        // if (!feasible) {
-        //     System.out.println("【改善初始解】未找到初始可行解，跳过改善初始解阶段");
-        // } else {
-        //     boolean change = true;
-        //     cur_value = evaluateObjective();
-        //     int iteration = 0;
+        if (!feasible) {
+            System.out.println("【改善初始解】未找到初始可行解，跳过改善初始解阶段");
+        } else {
+            boolean change = true;
+            cur_value = evaluateObjective();
+            int iteration = 0;
 
-        //     while (change && iteration < maxIterations && feasible) {
-        //         iteration++;
-        //         change = false;
+            while (change && iteration < maxIterations && feasible) {
+                iteration++;
+                change = false;
 
-        //         // 检查每个区域的真正中心
-        //         ArrayList<Area> newCenters = findTrueCenters();
+                // 检查每个区域的真正中心
+                ArrayList<Area> newCenters = findTrueCenters();
 
-        //         // 如果区域中心发生变化，更新并重新求解
-        //         boolean centersChanged = !compareCenters(centers, newCenters);
-        //         if (centersChanged) {
-        //             System.out.println("【改善初始解】检测到中心点变化，准备重新求解...");
-        //             // Check time limit before re-solving
-        //             if (System.currentTimeMillis() - startTime > GLOBAL_TIME_LIMIT_MS) {
-        //                 System.out.println("Global time limit of 1000 seconds exceeded during center adjustment");
-        //                 feasible = false;
-        //                 this.failureStage = 3; // 改善初始解阶段失败
-        //                 break;
-        //             }
-        //             centers = newCenters;
-        //             change = true;
+                // 如果区域中心发生变化，更新并重新求解
+                boolean centersChanged = !compareCenters(centers, newCenters);
+                if (centersChanged) {
+                    System.out.println("【改善初始解】检测到中心点变化，准备重新求解...");
+                    // Check time limit before re-solving
+                    if (System.currentTimeMillis() - startTime > GLOBAL_TIME_LIMIT_MS) {
+                        System.out.println("Global time limit of 1000 seconds exceeded during center adjustment");
+                        feasible = false;
+                        this.failureStage = 3; // 改善初始解阶段失败
+                        break;
+                    }
+                    centers = newCenters;
+                    change = true;
 
-        //             // 如果使用精确方法，中心点变化时需要清空旧的割约束并重新迭代
-        //             if (useExactMethod) {
-        //                 // 清空旧的割约束集合（因为中心点变了，旧的割约束不再有效）
-        //                 infeasibleSolutions.clear();
-        //                 System.out.println("【改善初始解】中心点变化，清空旧的割约束，重新迭代添加割约束...");
-        //                 // 重新执行精确方法的迭代过程
-        //                 feasible = solveWithExactMethod(startTime);
-        //                 // 如果重新求解后没有找到可行解，应该退出循环
-        //                 if (!feasible) {
-        //                     System.out.println("【改善初始解】重新求解后未找到可行解，停止改善初始解");
-        //                     this.failureStage = 3; // 改善初始解阶段失败
-        //                     break;
-        //                 }
-        //             } else {
-        //                 feasible = generateInitialSolution(startTime);
-        //                 // 如果重新求解后没有找到可行解，应该退出循环
-        //                 if (!feasible) {
-        //                     System.out.println("【改善初始解】重新求解后未找到可行解，停止改善初始解");
-        //                     this.failureStage = 3; // 改善初始解阶段失败
-        //                     break;
-        //                 }
-        //             }
-        //         } else {
-        //             // 中心点没有变化，不需要重新求解
-        //             System.out.println("【改善初始解】中心点未变化，跳过重新求解");
+                    // 如果使用精确方法，中心点变化时需要清空旧的割约束并重新迭代
+                    if (useExactMethod) {
+                        // 清空旧的割约束集合（因为中心点变了，旧的割约束不再有效）
+                        infeasibleSolutions.clear();
+                        System.out.println("【改善初始解】中心点变化，清空旧的割约束，重新迭代添加割约束...");
+                        // 重新执行精确方法的迭代过程
+                        feasible = solveWithExactMethod(startTime);
+                        // 如果重新求解后没有找到可行解，应该退出循环
+                        if (!feasible) {
+                            System.out.println("【改善初始解】重新求解后未找到可行解，停止改善初始解");
+                            this.failureStage = 3; // 改善初始解阶段失败
+                            break;
+                        }
+                    } else {
+                        feasible = generateInitialSolution(startTime);
+                        // 如果重新求解后没有找到可行解，应该退出循环
+                        if (!feasible) {
+                            System.out.println("【改善初始解】重新求解后未找到可行解，停止改善初始解");
+                            this.failureStage = 3; // 改善初始解阶段失败
+                            break;
+                        }
+                    }
+                } else {
+                    // 中心点没有变化，不需要重新求解
+                    System.out.println("【改善初始解】中心点未变化，跳过重新求解");
 
-        //             if (feasible) {
-        //                 cur_value = evaluateObjective();
-        //                 System.out.println("【改善初始解】Iteration " + iteration + ": 目标函数值 = " + cur_value);
-        //             } else {
-        //                 System.out.println("【改善初始解】Iteration " + iteration + ": 无法找到可行解");
-        //                 this.failureStage = 3; // 改善初始解阶段失败
-        //                 break;
-        //             }
-        //         }
-        //     }
+                    if (feasible) {
+                        cur_value = evaluateObjective();
+                        System.out.println("【改善初始解】Iteration " + iteration + ": 目标函数值 = " + cur_value);
+                    } else {
+                        System.out.println("【改善初始解】Iteration " + iteration + ": 无法找到可行解");
+                        this.failureStage = 3; // 改善初始解阶段失败
+                        break;
+                    }
+                }
+            }
 
-        //     // 如果改善初始解阶段结束后 feasible 为 false，确保设置 failureStage
-        //     if (!feasible && this.failureStage == 0) {
-        //         this.failureStage = 3; // 改善初始解阶段失败
-        //     }
-        // }
+            // 如果改善初始解阶段结束后 feasible 为 false，确保设置 failureStage
+            if (!feasible && this.failureStage == 0) {
+                this.failureStage = 3; // 改善初始解阶段失败
+            }
+        }
 
         // 确保连通性
-        // if (feasible) {
-        //     // Check time limit before ensuring connectivity
-        //     if (System.currentTimeMillis() - startTime > GLOBAL_TIME_LIMIT_MS) {
-        //         System.out.println("Global time limit of 1000 seconds exceeded before connectivity check");
-        //         this.failureStage = 4; // 确保连通性阶段失败
-        //         this.bestObjective = -1;
-        //         return;
-        //     }
-        //     boolean connectivitySuccess = ensureConnectivity(startTime);
-        //     if (!connectivitySuccess) {
-        //         this.failureStage = 4; // 确保连通性阶段失败
-        //         feasible = false;
-        //     }
-        //     if (feasible) {
-        //         cur_value = evaluateObjective();
-        //     }
-        // }
+        if (feasible) {
+            // Check time limit before ensuring connectivity
+            if (System.currentTimeMillis() - startTime > GLOBAL_TIME_LIMIT_MS) {
+                System.out.println("Global time limit of 1000 seconds exceeded before connectivity check");
+                this.failureStage = 4; // 确保连通性阶段失败
+                this.bestObjective = -1;
+                return;
+            }
+            boolean connectivitySuccess = ensureConnectivity(startTime);
+            if (!connectivitySuccess) {
+                this.failureStage = 4; // 确保连通性阶段失败
+                feasible = false;
+            }
+            if (feasible) {
+                cur_value = evaluateObjective();
+            }
+        }
 
         // 评估最终结果
         cur_value = evaluateObjective();
@@ -2565,6 +2565,7 @@ public class DistributionallyRobustAlgo {
 
     /**
      * 用 COPT 求解文档中的 SDP 证书子问题，验证当前解是否可行。
+     * 对每个 j 验证 phi(v_{j,L}) + phi(v_{j,U}) <= risk（与 AD-D1-SDP 一致）。
      */
     private boolean verifyD1SdpCertificatesByCopt(double[][] xVal, double tol) {
         int n = inst.getN();
@@ -2574,9 +2575,6 @@ public class DistributionallyRobustAlgo {
 
         for (int j = 0; j < p; j++) {
             double risk = useJointChance ? individualGammas[j] : gamma;
-            double[] split = splitRiskForD1Sdp(risk);
-            double gammaL = split[0];
-            double gammaU = split[1];
 
             double[] vL = new double[n];
             double[] vU = new double[n];
@@ -2592,28 +2590,18 @@ public class DistributionallyRobustAlgo {
                 throw new RuntimeException("COPT-SDP子问题返回无效值，请检查 COPT/CVXPY 环境。");
             }
 
-            if (boundL > gammaL + tol || boundU > gammaU + tol) {
-                System.out.println(String.format("【D1-SDP】区域%d违反: boundL=%.6f (阈值 %.6f), boundU=%.6f (阈值 %.6f)",
-                        j, boundL, gammaL, boundU, gammaU));
+            double total = boundL + boundU;
+            System.out.println(String.format(
+                    "【D1-SDP】区域%d检查: boundL=%.6f, boundU=%.6f, 合计=%.6f, 阈值(gamma/risk)=%.6f, 差值(total-risk)=%.6f",
+                    j, boundL, boundU, total, risk, total - risk
+            ));
+            if (total > risk + tol) {
+                System.out.println(String.format("【D1-SDP】区域%d违反: boundL=%.6f, boundU=%.6f, 合计=%.6f (阈值 %.6f)",
+                        j, boundL, boundU, total, risk));
                 return false;
             }
         }
         return true;
-    }
-
-    /**
-     * D1-SDP 的风险拆分策略：
-     * - 默认采用 gamma_a:gamma_b 的比例并归一化到当前 risk；
-     * - 若比例不可用，则退化为 0.5/0.5。
-     */
-    private double[] splitRiskForD1Sdp(double risk) {
-        double a = gamma_a;
-        double b = gamma_b;
-        if (a <= 0 || b <= 0 || a + b <= 1e-12) {
-            return new double[]{0.5 * risk, 0.5 * risk};
-        }
-        double sum = a + b;
-        return new double[]{risk * a / sum, risk * b / sum};
     }
 
     /**

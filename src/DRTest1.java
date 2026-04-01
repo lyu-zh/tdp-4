@@ -32,11 +32,11 @@ public class DRTest1 {
     public static void main(String[] args) throws Exception {
         // Experiment configuration
         double E = 50.0; // Expected value
-        double[] RSDValues = {0.125}; // Relative standard deviation array
+        double[] RSDValues = {0.125, 0.25}; // Relative standard deviation array
         double[] rValues = {0.5, 0.4, 0.3}; // Tolerance parameter values
         double[] gammaValues = {0.4, 0.3, 0.2, 0.1}; // Chance constraint risk parameter
         int[] scenarioNumValues = {1000}; // Number of scenarios
-        boolean[] useD1Values = {true}; // Whether to use D_1 or D_2 ambiguity set
+        boolean[] useD1Values = {true, false}; // Whether to use D_1 or D_2 ambiguity set
         double[] delta1Values = {2}; // D_2 ambiguity set parameter delta1
         double[] delta2Values = {4}; // D_2 ambiguity set parameter delta2
         boolean[] useJointChanceValues = {false}; // Whether to use joint chance constraint
@@ -45,7 +45,7 @@ public class DRTest1 {
         int[] avgDistMethodValues = {3}; // avgDist计算方式：1=方式1（所有j到i的距离平均），2=方式2（j的k近邻平均距离的平均）
         boolean useRelativeBalanceValue = true; // Whether to use relative balance constraint
         boolean useSupportingHyperplaneCutsValue = true; // Whether to use supporting-hyperplane cuts for relative balance (heuristic)
-        boolean useAssignmentDependentValue = true; // Whether to use assignment-dependent workload model
+        boolean useAssignmentDependentValue = false; // Whether to use assignment-dependent workload model
         long seed = 12345678; // Random seed
 
         long testSeed = seed + 1000;
@@ -121,7 +121,7 @@ public class DRTest1 {
                 for (File file : allFiles) {
                     String fileName = file.getName();
                     // 匹配GG20-和GG50-开头的文件
-                    if (fileName.startsWith("GG50-")) {
+                    if (fileName.startsWith("GG50-4")) {
                         instanceFiles.add(file);
                         System.out.println("找到数据文件: " + fileName);
                     }
@@ -348,7 +348,9 @@ public class DRTest1 {
                                                                 if (useAssignmentDependentValue) {
                                                                     // Assignment-dependent model: use new constructor
                                                                     algo = new DistributionallyRobustAlgo(
-                                                                            instance, gamma, seed, useD1, delta1, delta2, useJointChance, r, useExactMethod, useRelativeBalanceValue, useSupportingHyperplaneCutsValue
+                                                                            instance, gamma, seed, useD1, delta1, delta2,
+                                                                            useJointChance, r, useExactMethod,
+                                                                            useRelativeBalanceValue, useSupportingHyperplaneCutsValue
                                                                     );
                                                                 } else {
                                                                     // Standard model: use original constructor

@@ -50,6 +50,14 @@ if not exist "%COPT_JAR%" (
 
 if not exist "%OUT%" mkdir "%OUT%"
 
+REM Strip UTF-8 BOM from sources if present (javac reports illegal character \ufeff)
+where python >nul 2>&1
+if not errorlevel 1 (
+  for %%F in ("%SRC%\DistributionallyRobustAlgo.java" "%SRC%\DRTest1.java") do (
+    python -c "import pathlib; p=pathlib.Path(r'%%~fF'); d=p.read_bytes(); p.write_bytes(d[3:] if d[:3]==bytes([0xEF,0xBB,0xBF]) else d)" 2>nul
+  )
+)
+
 echo Compiling...
 set "CP=%OUT%;%GUROBI_JAR%;%JAMA_JAR%;%COPT_JAR%"
 javac -encoding UTF-8 -cp "%CP%" -sourcepath "%SRC%" -d "%OUT%" "%SRC%\DRTest1.java"
