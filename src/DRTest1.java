@@ -90,7 +90,7 @@ public class DRTest1 {
                 System.out.println("诊断CSV文件将保存到: " + diagnosticsCSVPath);
             }
             // Write CSV header
-            csvWriter.write("InstanceName,NumUnits,NumRegions,RSD,r,gamma,Scenarios,UseD1,Delta1,Delta2,UseJointChance,UseExactMethod,UseImprovedModel,UseAssignmentDependent,AvgDistMethod,AvgDistMean,Runtime(s),Objective,OutOfSamplePerformance,SolveSuccess,StatusCode,CutIterations,FailureStage");
+            csvWriter.write("InstanceName,NumUnits,NumRegions,RSD,r,gamma,Scenarios,UseD1,Delta1,Delta2,UseJointChance,UseExactMethod,UseImprovedModel,UseAssignmentDependent,AvgDistMethod,AvgDistMean,Runtime(s),Objective,OutOfSamplePerformance,SolveSuccess,StatusCode,CutIterations,FailureStage,OptimalAssignment,FinalCenters");
             csvWriter.newLine();
             csvWriter.flush(); // Flush header immediately to ensure it's saved even if program terminates early
 
@@ -121,7 +121,7 @@ public class DRTest1 {
                 for (File file : allFiles) {
                     String fileName = file.getName();
                     // 匹配GG20-和GG50-开头的文件
-                    if (fileName.startsWith("GG50-4")) {
+                    if (fileName.startsWith("GG80-4")) {
                         instanceFiles.add(file);
                         System.out.println("找到数据文件: " + fileName);
                     }
@@ -265,7 +265,7 @@ public class DRTest1 {
                                                         
                                                         // Write to CSV file (record all experiments, including failures)
                                                         csvWriter.write(String.format(
-                                                                "%s,%d,%d,%.3f,%.1f,%.1f,%d,%s,%.2f,%.2f,%s,%s,%s,%s,%d,%.4f,%.3f,%.4f,%.4f,%s,%d,%d,%d",
+                                                                "%s,%d,%d,%.3f,%.1f,%.1f,%d,%s,%.2f,%.2f,%s,%s,%s,%s,%d,%.4f,%.3f,%.4f,%.4f,%s,%d,%d,%d,%s,%s",
                                                                 instanceName, numUnits, numRegions, RSD, r, gamma, numScenarios,
                                                                 useD1 ? "true" : "false",
                                                                 0.0, 0.0, // Delta values not used for D_1
@@ -281,7 +281,9 @@ public class DRTest1 {
                                                                 solveSuccess ? "true" : "false",
                                                                 statusCode,
                                                                 cutIterations,
-                                                                failureStage
+                                                                failureStage,
+                                                                formatOptimalAssignmentForCsv(algo, solveSuccess, objectiveValue, numRegions),
+                                                                formatFinalCentersForCsv(algo, solveSuccess, objectiveValue)
                                                         ));
                                                         csvWriter.newLine();
 
@@ -423,7 +425,7 @@ public class DRTest1 {
                                                                 
                                                                 // Write to CSV file (record all experiments, including failures)
                                                                 csvWriter.write(String.format(
-                                                                        "%s,%d,%d,%.3f,%.1f,%.1f,%d,%s,%.2f,%.2f,%s,%s,%s,%s,%d,%.4f,%.3f,%.4f,%.4f,%s,%d,%d,%d",
+                                                                        "%s,%d,%d,%.3f,%.1f,%.1f,%d,%s,%.2f,%.2f,%s,%s,%s,%s,%d,%.4f,%.3f,%.4f,%.4f,%s,%d,%d,%d,%s,%s",
                                                                         instanceName, numUnits, numRegions, RSD, r, gamma, numScenarios,
                                                                         useD1 ? "true" : "false",
                                                                         delta1, delta2,
@@ -439,7 +441,9 @@ public class DRTest1 {
                                                                         solveSuccess ? "true" : "false",
                                                                         statusCode,
                                                                         cutIterations,
-                                                                        failureStage
+                                                                        failureStage,
+                                                                        formatOptimalAssignmentForCsv(algo, solveSuccess, objectiveValue, numRegions),
+                                                                        formatFinalCentersForCsv(algo, solveSuccess, objectiveValue)
                                                                 ));
                                                                 csvWriter.newLine();
 
@@ -477,6 +481,68 @@ public class DRTest1 {
         }
 
         System.out.println("Experiment completed, results saved to " + outputCSVPath);
+    }
+
+    /**
+     * 将最优区域划分序列化为 CSV 单列：{@code z0:u1 u2|z1:u3 ...}。
+     * 仅在求解成功且目标值有效时返回非空字符串（与 run() 写入 txt 的划分一致）。
+     */
+    private static String formatOptimalAssignmentForCsv(
+            DistributionallyRobustAlgo algo, boolean solveSuccess, double objectiveValue, int numRegions) {
+        if (!solveSuccess || objectiveValue == -1 || objectiveValue == Double.MAX_VALUE) {
+            return "";
+        }
+        ArrayList<Integer>[] zones = algo.getZones();
+        if (zones == null) {
+            return "";
+        }
+        StringBuilder sb = new StringBuilder();
+        for (int z = 0; z < numRegions; z++) {
+            if (z > 0) {
+                sb.append('|');
+            }
+            sb.append(z).append(':');
+            if (z < zones.length && zones[z] != null && !zones[z].isEmpty()) {
+                for (int i = 0; i < zones[z].size(); i++) {
+                    if (i > 0) {
+                        sb.append(' ');
+                    }
+                    sb.append(zones[z].get(i));
+                }
+            }
+        }
+        String raw = sb.toString();
+        if (raw.indexOf(',') >= 0 || raw.indexOf('"') >= 0 || raw.indexOf('\n') >= 0 || raw.indexOf('\r') >= 0) {
+            return "\"" + raw.replace("\"", "\"\"") + "\"";
+        }
+        return raw;
+    }
+
+    /**
+     * 记录最后一次改善中心点后的中心点组合（按当前 centers 顺序）。
+     * 仅在求解成功且目标值有效时返回非空字符串。
+     */
+    private static String formatFinalCentersForCsv(
+            DistributionallyRobustAlgo algo, boolean solveSuccess, double objectiveValue) {
+        if (!solveSuccess || objectiveValue == -1 || objectiveValue == Double.MAX_VALUE) {
+            return "";
+        }
+        ArrayList<Area> centers = algo.getCenters();
+        if (centers == null || centers.isEmpty()) {
+            return "";
+        }
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < centers.size(); i++) {
+            if (i > 0) {
+                sb.append(' ');
+            }
+            sb.append(centers.get(i).getId());
+        }
+        String raw = sb.toString();
+        if (raw.indexOf(',') >= 0 || raw.indexOf('"') >= 0 || raw.indexOf('\n') >= 0 || raw.indexOf('\r') >= 0) {
+            return "\"" + raw.replace("\"", "\"\"") + "\"";
+        }
+        return raw;
     }
 
     // 生成随机场景 - 使用均匀分布

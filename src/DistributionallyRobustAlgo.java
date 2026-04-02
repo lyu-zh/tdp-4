@@ -2651,7 +2651,7 @@ public class DistributionallyRobustAlgo {
                 try { cModel.setIntParam(copt.IntParam.Logging, 0); } catch (Exception ignored) {}
                 try { cModel.setIntParam(copt.IntParam.LogToConsole, 0); } catch (Exception ignored) {}
                 try { cModel.setIntParam(copt.IntParam.LogLevel, 0); } catch (Exception ignored) {}
-                try { cModel.setDblParam(copt.DblParam.TimeLimit, 30.0); } catch (Exception ignored) {}
+                try { cModel.setDblParam(copt.DblParam.TimeLimit, 600.0); } catch (Exception ignored) {}
                 try { cModel.setDblParam(copt.DblParam.FeasTol, 1e-8); } catch (Exception ignored) {}
                 try { cModel.setDblParam(copt.DblParam.MatrixTol, 1e-10); } catch (Exception ignored) {}
                 try { cModel.setIntParam(copt.IntParam.SDPMethod, attempt == 1 ? 0 : 1); } catch (Exception ignored) {}
@@ -3196,7 +3196,7 @@ public class DistributionallyRobustAlgo {
                 try { cModel.setIntParam(copt.IntParam.Logging, 0); } catch (Exception ignored) {}
                 try { cModel.setIntParam(copt.IntParam.LogToConsole, 0); } catch (Exception ignored) {}
                 try { cModel.setIntParam(copt.IntParam.LogLevel, 0); } catch (Exception ignored) {}
-                try { cModel.setDblParam(copt.DblParam.TimeLimit, 30.0); } catch (Exception ignored) {}
+                try { cModel.setDblParam(copt.DblParam.TimeLimit, 600.0); } catch (Exception ignored) {}
                 try { cModel.setDblParam(copt.DblParam.FeasTol, 1e-8); } catch (Exception ignored) {}
                 try { cModel.setDblParam(copt.DblParam.MatrixTol, 1e-10); } catch (Exception ignored) {}
                 try { cModel.setIntParam(copt.IntParam.SDPMethod, attempt == 1 ? 0 : 1); } catch (Exception ignored) {}
