@@ -121,7 +121,7 @@ public class DRTest1 {
                 for (File file : allFiles) {
                     String fileName = file.getName();
                     // 匹配GG20-和GG50-开头的文件
-                    if (fileName.startsWith("GG80-4")) {
+                    if (fileName.startsWith("GG50-5")) {
                         instanceFiles.add(file);
                         System.out.println("找到数据文件: " + fileName);
                     }

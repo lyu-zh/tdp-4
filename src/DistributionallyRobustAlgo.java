@@ -13,7 +13,8 @@ import java.util.*;
 
 /**
  * 分布鲁棒机会约束分区问题的解决方案
- * 实现基于D_1和D_2模糊集的DRICC问题以及基于Bonferroni近似的DRJCC模型
+ * 实现基于D_1和D_2模糊集的DRICC问题以及基于Bonferroni近似的DRJCC模型（跨区联合时仍将风险按区域分配 gamma/p）。
+ * 区内相对平衡在 COP+DNN 证书子问题中对两尾违约事件采用并事件（单次 SDP 目标），不再用两尾证书值相加的 Bonferroni 上界。
  * 使用Gurobi进行求解
  */
 public class DistributionallyRobustAlgo {
@@ -2416,7 +2417,7 @@ public class DistributionallyRobustAlgo {
         }
         
         if (useJointChance) {
-            // 使用Bonferroni近似的DRJCC模型
+            // DRJCC：跨区域的 Bonferroni 风险分配（每区 individualGammas[j]）；区内约束形式由各 add* 实现。
             for (int j = 0; j < centers.size(); j++) {
                 // 根据DRICC添加个体约束，使用individualGammas[j]作为风险参数
                 addDRICCConstraint(model, x, j, individualGammas[j]);
@@ -2565,7 +2566,7 @@ public class DistributionallyRobustAlgo {
 
     /**
      * 用 COPT 求解文档中的 SDP 证书子问题，验证当前解是否可行。
-     * 对每个 j 验证 phi(v_{j,L}) + phi(v_{j,U}) <= risk（与 AD-D1-SDP 一致）。
+     * 对每个 j 验证并事件 worst-case 违约概率上界 psi_union(v_{j,L},v_{j,U}) <= risk（非 phi_L+phi_U）。
      */
     private boolean verifyD1SdpCertificatesByCopt(double[][] xVal, double tol) {
         int n = inst.getN();
@@ -2583,21 +2584,19 @@ public class DistributionallyRobustAlgo {
                 vU[i] = xVal[i][j] - coeffUpper;
             }
 
-            double boundL = solveD1SdpBoundWithCopt(vL);
-            double boundU = solveD1SdpBoundWithCopt(vU);
+            double boundUnion = solveD1SdpUnionTwoTailsBoundWithCopt(vL, vU);
 
-            if (Double.isNaN(boundL) || Double.isNaN(boundU) || Double.isInfinite(boundL) || Double.isInfinite(boundU)) {
+            if (Double.isNaN(boundUnion) || Double.isInfinite(boundUnion)) {
                 throw new RuntimeException("COPT-SDP子问题返回无效值，请检查 COPT/CVXPY 环境。");
             }
 
-            double total = boundL + boundU;
             System.out.println(String.format(
-                    "【D1-SDP】区域%d检查: boundL=%.6f, boundU=%.6f, 合计=%.6f, 阈值(gamma/risk)=%.6f, 差值(total-risk)=%.6f",
-                    j, boundL, boundU, total, risk, total - risk
+                    "【D1-SDP】区域%d检查: unionBound=%.6f, 阈值(gamma/risk)=%.6f, 差值(bound-risk)=%.6f",
+                    j, boundUnion, risk, boundUnion - risk
             ));
-            if (total > risk + tol) {
-                System.out.println(String.format("【D1-SDP】区域%d违反: boundL=%.6f, boundU=%.6f, 合计=%.6f (阈值 %.6f)",
-                        j, boundL, boundU, total, risk));
+            if (boundUnion > risk + tol) {
+                System.out.println(String.format("【D1-SDP】区域%d违反: unionBound=%.6f (阈值 %.6f)",
+                        j, boundUnion, risk));
                 return false;
             }
         }
@@ -2777,6 +2776,210 @@ public class DistributionallyRobustAlgo {
             } catch (Exception e) {
                 lastException = new RuntimeException("调用COPT求解SDP证书失败: " + e.getMessage(), e);
                 // 环境可能异常，清空后下一次重建
+                try {
+                    if (d1SdpSharedEnvr != null) {
+                        d1SdpSharedEnvr.dispose();
+                    }
+                } catch (Exception ignored) {}
+                d1SdpSharedEnvr = null;
+            } finally {
+                if (cModel != null) {
+                    try {
+                        cModel.dispose();
+                    } catch (Exception ignored) {
+                    }
+                }
+            }
+        }
+        throw lastException != null ? lastException : new RuntimeException("调用COPT求解SDP证书失败: 未知错误");
+    }
+
+    /** 支撑集 d≥0 上：若 v 全部分量非正，则 d^T v>0 不可能，该尾违约概率恒为 0。 */
+    private static boolean isTailViolationImpossibleOnNonnegOrthant(double[] v) {
+        for (double vi : v) {
+            if (vi > 1e-12) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * D1：两尾并事件 (d^T v_L>0)∪(d^T v_U>0) 的 moment+DNN 证书上界。
+     * 共享一组 (y0,y,M)，三条 LMI：Z−N0、Z−E11−λ_L V_L−N1、Z−E11−λ_U V_U−N2（与单侧同属 conic-duality 路线，非两尾最优值相加）。
+     */
+    private double solveD1SdpUnionTwoTailsBoundWithCopt(double[] vL, double[] vU) {
+        if (isTailViolationImpossibleOnNonnegOrthant(vL) && isTailViolationImpossibleOnNonnegOrthant(vU)) {
+            return 0.0;
+        }
+        if (isTailViolationImpossibleOnNonnegOrthant(vL)) {
+            return solveD1SdpBoundWithCopt(vU);
+        }
+        if (isTailViolationImpossibleOnNonnegOrthant(vU)) {
+            return solveD1SdpBoundWithCopt(vL);
+        }
+
+        final int n = vL.length;
+        if (vU.length != n) {
+            throw new IllegalArgumentException("vL/vU 维度不一致");
+        }
+        final int dim = n + 1;
+        RuntimeException lastException = null;
+
+        for (int attempt = 1; attempt <= 2; attempt++) {
+            copt.Model cModel = null;
+            try {
+                copt.Envr env = getOrCreateD1SdpSharedEnvr();
+                cModel = env.createModel("d1_sdp_cert_union");
+
+                try { cModel.setIntParam(copt.IntParam.Logging, 0); } catch (Exception ignored) {}
+                try { cModel.setIntParam(copt.IntParam.LogToConsole, 0); } catch (Exception ignored) {}
+                try { cModel.setIntParam(copt.IntParam.LogLevel, 0); } catch (Exception ignored) {}
+                try { cModel.setDblParam(copt.DblParam.TimeLimit, 600.0); } catch (Exception ignored) {}
+                try { cModel.setDblParam(copt.DblParam.FeasTol, 1e-8); } catch (Exception ignored) {}
+                try { cModel.setDblParam(copt.DblParam.MatrixTol, 1e-10); } catch (Exception ignored) {}
+                try { cModel.setIntParam(copt.IntParam.SDPMethod, attempt == 1 ? 0 : 1); } catch (Exception ignored) {}
+
+                copt.Var y0 = cModel.addVar(1.0, copt.Consts.INFINITY, 0.0, copt.Consts.CONTINUOUS, "y0");
+                copt.Var[] y = new copt.Var[n];
+                for (int i = 0; i < n; i++) {
+                    y[i] = cModel.addVar(-copt.Consts.INFINITY, copt.Consts.INFINITY, 0.0, copt.Consts.CONTINUOUS, "y_" + i);
+                }
+                copt.Var lambdaL = cModel.addVar(0.0, copt.Consts.INFINITY, 0.0, copt.Consts.CONTINUOUS, "lambdaL");
+                copt.Var lambdaU = cModel.addVar(0.0, copt.Consts.INFINITY, 0.0, copt.Consts.CONTINUOUS, "lambdaU");
+
+                copt.Var[][] mVar = new copt.Var[dim][dim];
+                copt.Var[][] n0Var = new copt.Var[dim][dim];
+                copt.Var[][] n1Var = new copt.Var[dim][dim];
+                copt.Var[][] n2Var = new copt.Var[dim][dim];
+                for (int i = 0; i < dim; i++) {
+                    for (int j = i; j < dim; j++) {
+                        copt.Var mv = cModel.addVar(-copt.Consts.INFINITY, copt.Consts.INFINITY, 0.0, copt.Consts.CONTINUOUS, "m_" + i + "_" + j);
+                        mVar[i][j] = mv;
+                        mVar[j][i] = mv;
+
+                        copt.Var nv0 = cModel.addVar(0.0, copt.Consts.INFINITY, 0.0, copt.Consts.CONTINUOUS, "n0_" + i + "_" + j);
+                        n0Var[i][j] = nv0;
+                        n0Var[j][i] = nv0;
+
+                        copt.Var nv1 = cModel.addVar(0.0, copt.Consts.INFINITY, 0.0, copt.Consts.CONTINUOUS, "n1_" + i + "_" + j);
+                        n1Var[i][j] = nv1;
+                        n1Var[j][i] = nv1;
+
+                        copt.Var nv2 = cModel.addVar(0.0, copt.Consts.INFINITY, 0.0, copt.Consts.CONTINUOUS, "n2_" + i + "_" + j);
+                        n2Var[i][j] = nv2;
+                        n2Var[j][i] = nv2;
+                    }
+                }
+
+                copt.Expr obj = new copt.Expr();
+                obj.addTerm(y0, 1.0);
+                for (int i = 0; i < n; i++) {
+                    obj.addTerm(y[i], meanVector[i]);
+                }
+                for (int i = 1; i < dim; i++) {
+                    for (int j = i; j < dim; j++) {
+                        double qij = getCovariance(i - 1, j - 1) + meanVector[i - 1] * meanVector[j - 1];
+                        double coeff = (i == j) ? qij : 2.0 * qij;
+                        obj.addTerm(mVar[i][j], coeff);
+                    }
+                }
+                cModel.setObjective(obj, copt.Consts.MINIMIZE);
+
+                double[][] e11 = new double[dim][dim];
+                e11[0][0] = 1.0;
+                copt.SymMatrix constE11 = createSymMatrixFromDense(cModel, e11);
+
+                double[][] minusVaugL = new double[dim][dim];
+                for (int i = 1; i < dim; i++) {
+                    minusVaugL[0][i] = -0.5 * vL[i - 1];
+                    minusVaugL[i][0] = -0.5 * vL[i - 1];
+                }
+                copt.SymMatrix constMinusVaugL = createSymMatrixFromDense(cModel, minusVaugL);
+
+                double[][] minusVaugU = new double[dim][dim];
+                for (int i = 1; i < dim; i++) {
+                    minusVaugU[0][i] = -0.5 * vU[i - 1];
+                    minusVaugU[i][0] = -0.5 * vU[i - 1];
+                }
+                copt.SymMatrix constMinusVaugU = createSymMatrixFromDense(cModel, minusVaugU);
+
+                copt.LmiExpr lmi1 = new copt.LmiExpr();
+                lmi1.addTerm(y0, createBasisSymMatrix(cModel, dim, 0, 0, 1.0));
+                for (int i = 1; i < dim; i++) {
+                    lmi1.addTerm(y[i - 1], createBasisSymMatrix(cModel, dim, 0, i, 0.5));
+                }
+                for (int i = 1; i < dim; i++) {
+                    for (int j = i; j < dim; j++) {
+                        lmi1.addTerm(mVar[i][j], createBasisSymMatrix(cModel, dim, i, j, 1.0));
+                    }
+                }
+                for (int i = 0; i < dim; i++) {
+                    for (int j = i; j < dim; j++) {
+                        lmi1.addTerm(n0Var[i][j], createBasisSymMatrix(cModel, dim, i, j, -1.0));
+                    }
+                }
+                cModel.addLmiConstr(lmi1, "lmi_union_z_minus_n0_psd");
+
+                copt.LmiExpr lmi2 = new copt.LmiExpr();
+                lmi2.addTerm(y0, createBasisSymMatrix(cModel, dim, 0, 0, 1.0));
+                for (int i = 1; i < dim; i++) {
+                    lmi2.addTerm(y[i - 1], createBasisSymMatrix(cModel, dim, 0, i, 0.5));
+                }
+                for (int i = 1; i < dim; i++) {
+                    for (int j = i; j < dim; j++) {
+                        lmi2.addTerm(mVar[i][j], createBasisSymMatrix(cModel, dim, i, j, 1.0));
+                    }
+                }
+                for (int i = 0; i < dim; i++) {
+                    for (int j = i; j < dim; j++) {
+                        lmi2.addTerm(n1Var[i][j], createBasisSymMatrix(cModel, dim, i, j, -1.0));
+                    }
+                }
+                lmi2.addConstant(new copt.SymMatExpr(constE11, -1.0));
+                lmi2.addTerm(lambdaL, constMinusVaugL);
+                cModel.addLmiConstr(lmi2, "lmi_union_z_minus_e11_vL_minus_n1_psd");
+
+                copt.LmiExpr lmi3 = new copt.LmiExpr();
+                lmi3.addTerm(y0, createBasisSymMatrix(cModel, dim, 0, 0, 1.0));
+                for (int i = 1; i < dim; i++) {
+                    lmi3.addTerm(y[i - 1], createBasisSymMatrix(cModel, dim, 0, i, 0.5));
+                }
+                for (int i = 1; i < dim; i++) {
+                    for (int j = i; j < dim; j++) {
+                        lmi3.addTerm(mVar[i][j], createBasisSymMatrix(cModel, dim, i, j, 1.0));
+                    }
+                }
+                for (int i = 0; i < dim; i++) {
+                    for (int j = i; j < dim; j++) {
+                        lmi3.addTerm(n2Var[i][j], createBasisSymMatrix(cModel, dim, i, j, -1.0));
+                    }
+                }
+                lmi3.addConstant(new copt.SymMatExpr(constE11, -1.0));
+                lmi3.addTerm(lambdaU, constMinusVaugU);
+                cModel.addLmiConstr(lmi3, "lmi_union_z_minus_e11_vU_minus_n2_psd");
+
+                cModel.solve();
+
+                int status = cModel.getIntAttr(copt.IntAttr.LpStatus);
+                int hasLpSol = cModel.getIntAttr(copt.IntAttr.HasLpSol);
+                if (status == 1) {
+                    double val = cModel.getDblAttr(copt.DblAttr.LpObjVal);
+                    System.out.println(String.format("【D1-SDP-并事件】子问题最优: status=%d, obj=%.6f", status, val));
+                    return val;
+                }
+                if (hasLpSol == 1) {
+                    double val = cModel.getDblAttr(copt.DblAttr.LpObjVal);
+                    System.out.println(String.format("【D1-SDP-并事件】警告：子问题 status=%d（非最优）且 HasLpSol=1，忽略当前值 %.6f，转入重试/保守回退", status, val));
+                }
+                if (attempt == 2) {
+                    double fallback = 1.0;
+                    System.out.println(String.format("【D1-SDP-并事件】警告：子问题 status=%d（非最优），采用保守上界 %.2f 继续", status, fallback));
+                    return fallback;
+                }
+                throw new RuntimeException("COPT子问题未达到最优状态, status=" + status + ", HasLpSol=" + hasLpSol + ", attempt=" + attempt);
+            } catch (Exception e) {
+                lastException = new RuntimeException("调用COPT求解SDP证书失败: " + e.getMessage(), e);
                 try {
                     if (d1SdpSharedEnvr != null) {
                         d1SdpSharedEnvr.dispose();
@@ -3015,7 +3218,7 @@ public class DistributionallyRobustAlgo {
     }
 
     /**
-     * assignment-dependent + D1：对每个 j 验证 phi(v_{j,L}) + phi(v_{j,U}) <= gamma_j。
+     * assignment-dependent + D1：对每个 j 验证并事件 psi_union <= gamma_j。
      */
     private boolean verifyAssignmentDependentD1SdpCertificatesByCopt(double[][] xVal, double tol) {
         int p = centers.size();
@@ -3025,21 +3228,19 @@ public class DistributionallyRobustAlgo {
         for (int j = 0; j < p; j++) {
             double risk = useJointChance ? individualGammas[j] : gamma;
             AssignmentDependentViolationVectors vecs = buildAssignmentDependentViolationVectors(xVal, j, coeff, coeffUpper);
-            double boundL = solveD1SdpBoundWithCopt(vecs.vL);
-            double boundU = solveD1SdpBoundWithCopt(vecs.vU);
+            double boundUnion = solveD1SdpUnionTwoTailsBoundWithCopt(vecs.vL, vecs.vU);
 
-            if (Double.isNaN(boundL) || Double.isNaN(boundU) || Double.isInfinite(boundL) || Double.isInfinite(boundU)) {
+            if (Double.isNaN(boundUnion) || Double.isInfinite(boundUnion)) {
                 throw new RuntimeException("AD-D1 COPT-SDP子问题返回无效值，请检查 COPT/CVXPY 环境。");
             }
 
-            double total = boundL + boundU;
             System.out.println(String.format(
-                    "【AD-D1-SDP】区域%d检查: boundL=%.6f, boundU=%.6f, 合计=%.6f, 阈值(gamma/risk)=%.6f, 差值(total-risk)=%.6f",
-                    j, boundL, boundU, total, risk, total - risk
+                    "【AD-D1-SDP】区域%d检查: unionBound=%.6f, 阈值(gamma/risk)=%.6f, 差值(bound-risk)=%.6f",
+                    j, boundUnion, risk, boundUnion - risk
             ));
-            if (total > risk + tol) {
-                System.out.println(String.format("【AD-D1-SDP】区域%d违反: boundL=%.6f, boundU=%.6f, 合计=%.6f (阈值 %.6f)",
-                        j, boundL, boundU, total, risk));
+            if (boundUnion > risk + tol) {
+                System.out.println(String.format("【AD-D1-SDP】区域%d违反: unionBound=%.6f (阈值 %.6f)",
+                        j, boundUnion, risk));
                 return false;
             }
         }
@@ -3047,7 +3248,7 @@ public class DistributionallyRobustAlgo {
     }
 
     /**
-     * assignment-dependent + D2：对每个 j 验证 phi(v_{j,L}) + phi(v_{j,U}) <= gamma_j。
+     * assignment-dependent + D2：对每个 j 验证并事件 psi_union <= gamma_j。
      */
     private boolean verifyAssignmentDependentD2SdpCertificatesByCopt(double[][] xVal, double tol) {
         int p = centers.size();
@@ -3057,21 +3258,19 @@ public class DistributionallyRobustAlgo {
         for (int j = 0; j < p; j++) {
             double risk = useJointChance ? individualGammas[j] : gamma;
             AssignmentDependentViolationVectors vecs = buildAssignmentDependentViolationVectors(xVal, j, coeff, coeffUpper);
-            double boundL = solveD2SdpBoundWithCopt(vecs.vL);
-            double boundU = solveD2SdpBoundWithCopt(vecs.vU);
+            double boundUnion = solveD2SdpUnionTwoTailsBoundWithCopt(vecs.vL, vecs.vU);
 
-            if (Double.isNaN(boundL) || Double.isNaN(boundU) || Double.isInfinite(boundL) || Double.isInfinite(boundU)) {
+            if (Double.isNaN(boundUnion) || Double.isInfinite(boundUnion)) {
                 throw new RuntimeException("AD-D2 COPT-SDP-SOCP子问题返回无效值，请检查 COPT/CVXPY 环境。");
             }
 
-            double total = boundL + boundU;
             System.out.println(String.format(
-                    "【AD-D2-SDP-SOCP】区域%d检查: boundL=%.6f, boundU=%.6f, 合计=%.6f, 阈值(gamma/risk)=%.6f, 差值(total-risk)=%.6f",
-                    j, boundL, boundU, total, risk, total - risk
+                    "【AD-D2-SDP-SOCP】区域%d检查: unionBound=%.6f, 阈值(gamma/risk)=%.6f, 差值(bound-risk)=%.6f",
+                    j, boundUnion, risk, boundUnion - risk
             ));
-            if (total > risk + tol) {
-                System.out.println(String.format("【AD-D2-SDP-SOCP】区域%d违反: boundL=%.6f, boundU=%.6f, 合计=%.6f (阈值 %.6f)",
-                        j, boundL, boundU, total, risk));
+            if (boundUnion > risk + tol) {
+                System.out.println(String.format("【AD-D2-SDP-SOCP】区域%d违反: unionBound=%.6f (阈值 %.6f)",
+                        j, boundUnion, risk));
                 return false;
             }
         }
@@ -3132,17 +3331,15 @@ public class DistributionallyRobustAlgo {
                 vU[i] = xVal[i][j] - coeffUpper;
             }
 
-            double boundL = solveD2SdpBoundWithCopt(vL);
-            double boundU = solveD2SdpBoundWithCopt(vU);
+            double boundUnion = solveD2SdpUnionTwoTailsBoundWithCopt(vL, vU);
 
-            if (Double.isNaN(boundL) || Double.isNaN(boundU) || Double.isInfinite(boundL) || Double.isInfinite(boundU)) {
+            if (Double.isNaN(boundUnion) || Double.isInfinite(boundUnion)) {
                 throw new RuntimeException("COPT-SDP-SOCP子问题返回无效值，请检查 COPT/CVXPY 环境。");
             }
 
-            double boundTotal = boundL + boundU;
-            if (boundTotal > risk + tol) {
-                System.out.println(String.format("【D2-SDP-SOCP】区域%d违反: boundL=%.6f, boundU=%.6f, 合计=%.6f (阈值 %.6f)",
-                        j, boundL, boundU, boundTotal, risk));
+            if (boundUnion > risk + tol) {
+                System.out.println(String.format("【D2-SDP-SOCP】区域%d违反: unionBound=%.6f (阈值 %.6f)",
+                        j, boundUnion, risk));
                 return false;
             }
         }
@@ -3351,6 +3548,236 @@ public class DistributionallyRobustAlgo {
                 if (attempt == 2) {
                     double fallback = 1.0;
                     System.out.println(String.format("【D2-SDP-SOCP】警告：子问题 status=%d（非最优），采用保守上界 %.2f 继续", status, fallback));
+                    return fallback;
+                }
+                throw new RuntimeException("COPT子问题未达到最优状态, status=" + status + ", HasLpSol=" + hasLpSol + ", attempt=" + attempt);
+            } catch (Exception e) {
+                lastException = new RuntimeException("调用COPT求解D2-SDP-SOCP证书失败: " + e.getMessage(), e);
+                try {
+                    if (d2SdpSharedEnvr != null) {
+                        d2SdpSharedEnvr.dispose();
+                    }
+                } catch (Exception ignored) {}
+                d2SdpSharedEnvr = null;
+            } finally {
+                if (cModel != null) {
+                    try {
+                        cModel.dispose();
+                    } catch (Exception ignored) {
+                    }
+                }
+            }
+        }
+        throw lastException != null ? lastException : new RuntimeException("调用COPT求解D2-SDP-SOCP证书失败: 未知错误");
+    }
+
+    /**
+     * D2：两尾并事件 (d^T v_L>0)∪(d^T v_U>0) 的混合 SDP-SOCP 证书上界（共享 Z、M、SOC，两条 tail shifted LMI）。
+     */
+    private double solveD2SdpUnionTwoTailsBoundWithCopt(double[] vL, double[] vU) {
+        if (isTailViolationImpossibleOnNonnegOrthant(vL) && isTailViolationImpossibleOnNonnegOrthant(vU)) {
+            return 0.0;
+        }
+        if (isTailViolationImpossibleOnNonnegOrthant(vL)) {
+            return solveD2SdpBoundWithCopt(vU);
+        }
+        if (isTailViolationImpossibleOnNonnegOrthant(vU)) {
+            return solveD2SdpBoundWithCopt(vL);
+        }
+
+        final int n = vL.length;
+        if (vU.length != n) {
+            throw new IllegalArgumentException("vL/vU 维度不一致");
+        }
+        final int dim = n + 1;
+        final int socDim = n + 1;
+        final double sqrtDelta1 = Math.sqrt(Math.max(0.0, delta1));
+        final double[][] sigmaSqrt = getD2SigmaSqrtForCurrentDimension(n);
+
+        RuntimeException lastException = null;
+
+        for (int attempt = 1; attempt <= 2; attempt++) {
+            copt.Model cModel = null;
+            try {
+                copt.Envr env = getOrCreateD2SdpSharedEnvr();
+                cModel = env.createModel("d2_sdp_soc_cert_union");
+
+                try { cModel.setIntParam(copt.IntParam.Logging, 0); } catch (Exception ignored) {}
+                try { cModel.setIntParam(copt.IntParam.LogToConsole, 0); } catch (Exception ignored) {}
+                try { cModel.setIntParam(copt.IntParam.LogLevel, 0); } catch (Exception ignored) {}
+                try { cModel.setDblParam(copt.DblParam.TimeLimit, 600.0); } catch (Exception ignored) {}
+                try { cModel.setDblParam(copt.DblParam.FeasTol, 1e-8); } catch (Exception ignored) {}
+                try { cModel.setDblParam(copt.DblParam.MatrixTol, 1e-10); } catch (Exception ignored) {}
+                try { cModel.setIntParam(copt.IntParam.SDPMethod, attempt == 1 ? 0 : 1); } catch (Exception ignored) {}
+
+                copt.Var y0 = cModel.addVar(1.0, copt.Consts.INFINITY, 0.0, copt.Consts.CONTINUOUS, "y0");
+                copt.Var[] y = new copt.Var[n];
+                for (int i = 0; i < n; i++) {
+                    y[i] = cModel.addVar(-copt.Consts.INFINITY, copt.Consts.INFINITY, 0.0, copt.Consts.CONTINUOUS, "y_" + i);
+                }
+                copt.Var lambdaL = cModel.addVar(0.0, copt.Consts.INFINITY, 0.0, copt.Consts.CONTINUOUS, "lambdaL");
+                copt.Var lambdaU = cModel.addVar(0.0, copt.Consts.INFINITY, 0.0, copt.Consts.CONTINUOUS, "lambdaU");
+                copt.Var s = cModel.addVar(0.0, copt.Consts.INFINITY, 0.0, copt.Consts.CONTINUOUS, "s");
+
+                copt.Var[][] mVar = new copt.Var[dim][dim];
+                copt.Var[][] n0Var = new copt.Var[dim][dim];
+                copt.Var[][] n1Var = new copt.Var[dim][dim];
+                copt.Var[][] n2Var = new copt.Var[dim][dim];
+                for (int i = 0; i < dim; i++) {
+                    for (int j = i; j < dim; j++) {
+                        copt.Var mv = cModel.addVar(-copt.Consts.INFINITY, copt.Consts.INFINITY, 0.0, copt.Consts.CONTINUOUS, "m_" + i + "_" + j);
+                        mVar[i][j] = mv;
+                        mVar[j][i] = mv;
+
+                        copt.Var nv0 = cModel.addVar(0.0, copt.Consts.INFINITY, 0.0, copt.Consts.CONTINUOUS, "n0_" + i + "_" + j);
+                        n0Var[i][j] = nv0;
+                        n0Var[j][i] = nv0;
+
+                        copt.Var nv1 = cModel.addVar(0.0, copt.Consts.INFINITY, 0.0, copt.Consts.CONTINUOUS, "n1_" + i + "_" + j);
+                        n1Var[i][j] = nv1;
+                        n1Var[j][i] = nv1;
+
+                        copt.Var nv2 = cModel.addVar(0.0, copt.Consts.INFINITY, 0.0, copt.Consts.CONTINUOUS, "n2_" + i + "_" + j);
+                        n2Var[i][j] = nv2;
+                        n2Var[j][i] = nv2;
+                    }
+                }
+
+                copt.Expr obj = new copt.Expr();
+                obj.addTerm(y0, 1.0);
+                for (int i = 0; i < n; i++) {
+                    obj.addTerm(y[i], meanVector[i]);
+                }
+                for (int i = 1; i < dim; i++) {
+                    for (int j = i; j < dim; j++) {
+                        double cij = delta2 * getCovariance(i - 1, j - 1) + meanVector[i - 1] * meanVector[j - 1];
+                        double coeff = (i == j) ? cij : 2.0 * cij;
+                        obj.addTerm(mVar[i][j], coeff);
+                    }
+                }
+                obj.addTerm(s, sqrtDelta1);
+                cModel.setObjective(obj, copt.Consts.MINIMIZE);
+
+                double[][] e11 = new double[dim][dim];
+                e11[0][0] = 1.0;
+                copt.SymMatrix constE11 = createSymMatrixFromDense(cModel, e11);
+
+                double[][] minusVaugL = new double[dim][dim];
+                for (int i = 1; i < dim; i++) {
+                    minusVaugL[0][i] = -0.5 * vL[i - 1];
+                    minusVaugL[i][0] = -0.5 * vL[i - 1];
+                }
+                copt.SymMatrix constMinusVaugL = createSymMatrixFromDense(cModel, minusVaugL);
+
+                double[][] minusVaugU = new double[dim][dim];
+                for (int i = 1; i < dim; i++) {
+                    minusVaugU[0][i] = -0.5 * vU[i - 1];
+                    minusVaugU[i][0] = -0.5 * vU[i - 1];
+                }
+                copt.SymMatrix constMinusVaugU = createSymMatrixFromDense(cModel, minusVaugU);
+
+                copt.LmiExpr lmi1 = new copt.LmiExpr();
+                lmi1.addTerm(y0, createBasisSymMatrix(cModel, dim, 0, 0, 1.0));
+                for (int i = 1; i < dim; i++) {
+                    lmi1.addTerm(y[i - 1], createBasisSymMatrix(cModel, dim, 0, i, 0.5));
+                }
+                for (int i = 1; i < dim; i++) {
+                    for (int j = i; j < dim; j++) {
+                        lmi1.addTerm(mVar[i][j], createBasisSymMatrix(cModel, dim, i, j, 1.0));
+                    }
+                }
+                for (int i = 0; i < dim; i++) {
+                    for (int j = i; j < dim; j++) {
+                        lmi1.addTerm(n0Var[i][j], createBasisSymMatrix(cModel, dim, i, j, -1.0));
+                    }
+                }
+                cModel.addLmiConstr(lmi1, "d2_union_lmi_z_minus_n0_psd");
+
+                copt.LmiExpr lmi2 = new copt.LmiExpr();
+                lmi2.addTerm(y0, createBasisSymMatrix(cModel, dim, 0, 0, 1.0));
+                for (int i = 1; i < dim; i++) {
+                    lmi2.addTerm(y[i - 1], createBasisSymMatrix(cModel, dim, 0, i, 0.5));
+                }
+                for (int i = 1; i < dim; i++) {
+                    for (int j = i; j < dim; j++) {
+                        lmi2.addTerm(mVar[i][j], createBasisSymMatrix(cModel, dim, i, j, 1.0));
+                    }
+                }
+                for (int i = 0; i < dim; i++) {
+                    for (int j = i; j < dim; j++) {
+                        lmi2.addTerm(n1Var[i][j], createBasisSymMatrix(cModel, dim, i, j, -1.0));
+                    }
+                }
+                lmi2.addConstant(new copt.SymMatExpr(constE11, -1.0));
+                lmi2.addTerm(lambdaL, constMinusVaugL);
+                cModel.addLmiConstr(lmi2, "d2_union_lmi_z_minus_e11_vL_minus_n1_psd");
+
+                copt.LmiExpr lmi3 = new copt.LmiExpr();
+                lmi3.addTerm(y0, createBasisSymMatrix(cModel, dim, 0, 0, 1.0));
+                for (int i = 1; i < dim; i++) {
+                    lmi3.addTerm(y[i - 1], createBasisSymMatrix(cModel, dim, 0, i, 0.5));
+                }
+                for (int i = 1; i < dim; i++) {
+                    for (int j = i; j < dim; j++) {
+                        lmi3.addTerm(mVar[i][j], createBasisSymMatrix(cModel, dim, i, j, 1.0));
+                    }
+                }
+                for (int i = 0; i < dim; i++) {
+                    for (int j = i; j < dim; j++) {
+                        lmi3.addTerm(n2Var[i][j], createBasisSymMatrix(cModel, dim, i, j, -1.0));
+                    }
+                }
+                lmi3.addConstant(new copt.SymMatExpr(constE11, -1.0));
+                lmi3.addTerm(lambdaU, constMinusVaugU);
+                cModel.addLmiConstr(lmi3, "d2_union_lmi_z_minus_e11_vU_minus_n2_psd");
+
+                copt.LmiExpr lmiMpsd = new copt.LmiExpr();
+                for (int i = 0; i < n; i++) {
+                    for (int j = i; j < n; j++) {
+                        lmiMpsd.addTerm(mVar[i + 1][j + 1], createBasisSymMatrix(cModel, n, i, j, 1.0));
+                    }
+                }
+                cModel.addLmiConstr(lmiMpsd, "d2_union_lmi_m_psd");
+
+                copt.LmiExpr lmiSoc = new copt.LmiExpr();
+                lmiSoc.addTerm(s, createBasisSymMatrix(cModel, socDim, 0, 0, 1.0));
+                for (int k = 1; k < socDim; k++) {
+                    lmiSoc.addTerm(s, createBasisSymMatrix(cModel, socDim, k, k, 1.0));
+                }
+                for (int k = 0; k < n; k++) {
+                    for (int i = 0; i < n; i++) {
+                        double coeffY = sigmaSqrt[k][i];
+                        if (Math.abs(coeffY) > 1e-12) {
+                            lmiSoc.addTerm(y[i], createBasisSymMatrix(cModel, socDim, 0, k + 1, coeffY));
+                        }
+                    }
+                    for (int i = 0; i < n; i++) {
+                        for (int t = 0; t < n; t++) {
+                            double coeffM = 2.0 * sigmaSqrt[k][i] * meanVector[t];
+                            if (Math.abs(coeffM) > 1e-12) {
+                                lmiSoc.addTerm(mVar[i + 1][t + 1], createBasisSymMatrix(cModel, socDim, 0, k + 1, coeffM));
+                            }
+                        }
+                    }
+                }
+                cModel.addLmiConstr(lmiSoc, "d2_union_lmi_soc");
+
+                cModel.solve();
+
+                int status = cModel.getIntAttr(copt.IntAttr.LpStatus);
+                int hasLpSol = cModel.getIntAttr(copt.IntAttr.HasLpSol);
+                if (status == 1) {
+                    double val = cModel.getDblAttr(copt.DblAttr.LpObjVal);
+                    System.out.println(String.format("【D2-SDP-SOCP-并事件】子问题最优: status=%d, obj=%.6f", status, val));
+                    return val;
+                }
+                if (hasLpSol == 1) {
+                    double val = cModel.getDblAttr(copt.DblAttr.LpObjVal);
+                    System.out.println(String.format("【D2-SDP-SOCP-并事件】警告：子问题 status=%d（非最优）且 HasLpSol=1，忽略当前值 %.6f，转入重试/保守回退", status, val));
+                }
+                if (attempt == 2) {
+                    double fallback = 1.0;
+                    System.out.println(String.format("【D2-SDP-SOCP-并事件】警告：子问题 status=%d（非最优），采用保守上界 %.2f 继续", status, fallback));
                     return fallback;
                 }
                 throw new RuntimeException("COPT子问题未达到最优状态, status=" + status + ", HasLpSol=" + hasLpSol + ", attempt=" + attempt);
@@ -7769,9 +8196,9 @@ public class DistributionallyRobustAlgo {
                 continue;
             }
 
-            // 使用联合约束验证：inf_{P ∈ D} P{d^T * v_{j,L} > 0 或 d^T * v_{j,U} > 0} <= γ
-            // 根据 Bonferroni 不等式，这等价于：
-            // sup_{P ∈ D} P{d^T * v_{j,L} > 0} + sup_{P ∈ D} P{d^T * v_{j,U} > 0} <= γ
+            // 目标事件：inf_P P{d^T v_{j,L}≤0 且 d^T v_{j,U}≤0} ≥ 1−γ，即 sup_P P{d^T v_{j,L}>0 或 d^T v_{j,U}>0} ≤ γ。
+            // 近似法 + COP-SDP 分离：COPT 子问题按并事件（共享 Z、双尾 LMI）验算，不用两尾概率上界相加。
+            // 精确法分支仍沿用原 Cantelli/重构判据（含两尾项求和形式的保守处理）。
 
             if (useExactMethod) {
                 // 精确方法：使用精确的reformulate约束
