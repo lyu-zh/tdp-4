@@ -1,6 +1,10 @@
 import com.gurobi.gurobi.*;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.*;
 
 public class ChanceConstrainedAlgo {
@@ -24,11 +28,37 @@ public class ChanceConstrainedAlgo {
     private double[] scenarioLowerBounds; // L_s
     private double[] scenarioUpperBounds; // U_s
 
+    /**
+     * 若为 true，机会约束中的容量使用 assignment-dependent 工作量 d_{ijs} 与 T_s 的相对平衡；
+     * 否则保持原按单元需求 d_i 的模型（L_s、U_s、f_s、g_s）。
+     */
+    private final boolean useDijWorkloadModel;
+    /** 仅当 useDijWorkloadModel 时非 null：scenarioDij[s][i][j] 为场景 s 下单元 i 分到区域 j 的工作量。 */
+    private double[][][] scenarioDij;
+    /** 紧大 M：下界松弛 f_{js}，形状 [场景][区域]。 */
+    private double[][] dijLowerM;
+    /** 紧大 M：上界松弛 g_{js}。 */
+    private double[][] dijUpperM;
+
     // 最后一次求解模型的状态代码
     private int lastModelStatus = -1;
     
     // 全局时间限制（整个算法运行的总时间限制，单位：毫秒）
-    private static final long GLOBAL_TIME_LIMIT_MS = 1000 * 1000; // 1000 seconds
+    private static final long GLOBAL_TIME_LIMIT_MS = 600 * 1000; // 1000 seconds
+
+    /**
+     * 相对平衡（原始需求）：场景总需求为 D 时，单区总需求的下界 (1-r)/k · D（与 DR 相对平衡、原始需求一致）。
+     */
+    private static double relativeBalanceDemandLower(double scenarioTotalDemand, double r, int numRegions) {
+        return (1.0 - r) * (scenarioTotalDemand / numRegions);
+    }
+
+    /**
+     * 相对平衡（原始需求）：场景总需求为 D 时，单区总需求的上界 (1+r)/k · D。
+     */
+    private static double relativeBalanceDemandUpper(double scenarioTotalDemand, double r, int numRegions) {
+        return (1.0 + r) * (scenarioTotalDemand / numRegions);
+    }
 
     // 修改构造函数，接收一个种子参数
     public ChanceConstrainedAlgo(Instance instance, double[][] scenarios, double gamma, long seed, double r) {
@@ -38,6 +68,10 @@ public class ChanceConstrainedAlgo {
         this.gamma = gamma;
         this.rand = new Random(seed); // 使用固定种子初始化随机数生成器
         this.selectedScenarios = new HashSet<>(); // 初始化选定场景集合
+        this.useDijWorkloadModel = false;
+        this.scenarioDij = null;
+        this.dijLowerM = null;
+        this.dijUpperM = null;
 
         // 初始化场景需求，把传入的需求场景复制到本地
         this.numScenarios = scenarios.length;
@@ -60,16 +94,408 @@ public class ChanceConstrainedAlgo {
                 this.scenarioDemands[s][i] = (int) scenarios[s][i];
                 scenarioTotalDemand += scenarios[s][i];
             }
-            // 按场景计算均值 μ_s
+            // 按场景计算均值 μ_s = D_s / k（每区平均需求）
             double mu_s = scenarioTotalDemand / inst.k;
             this.scenarioMeans[s] = mu_s;
 
-            // 按场景计算上下界 L_s, U_s
-            this.scenarioLowerBounds[s] = (1 - r) * mu_s;
-            this.scenarioUpperBounds[s] = (1 + r) * mu_s;
+            // 按场景计算相对平衡上下界 L_s, U_s（与 Gurobi 中容量约束一致）
+            this.scenarioLowerBounds[s] = relativeBalanceDemandLower(scenarioTotalDemand, r, inst.k);
+            this.scenarioUpperBounds[s] = relativeBalanceDemandUpper(scenarioTotalDemand, r, inst.k);
 
-            // 保留原有的上界计算（如果其他地方还在使用）
-            this.scenarioDemandUpperBounds[s] = (1 + r) * (scenarioTotalDemand / inst.k);
+            // 保留与 scenarioUpperBounds[s] 相同的量（兼容旧字段名）
+            this.scenarioDemandUpperBounds[s] = this.scenarioUpperBounds[s];
+        }
+    }
+
+    /**
+     * assignment-dependent 工作量场景：d_{ijs}，相对平衡约束基于
+     * T_s=sum_{i,k} d_{iks}x_{ik} 与 W_{js}=sum_i d_{ijs}x_{ij}。
+     * 与 {@link #ChanceConstrainedAlgo(Instance, double[][], double, long, double)} 并行存在，不修改原构造逻辑。
+     */
+    public ChanceConstrainedAlgo(Instance instance, double[][][] dijScenarios, double gamma, long seed, double r) {
+        this.inst = instance;
+        this.zones = new ArrayList[inst.k];
+        this.r = r;
+        this.gamma = gamma;
+        this.rand = new Random(seed);
+        this.selectedScenarios = new HashSet<>();
+        this.useDijWorkloadModel = true;
+        this.numScenarios = dijScenarios.length;
+        if (numScenarios <= 0) {
+            throw new IllegalArgumentException("dijScenarios 不能为空");
+        }
+        int n = inst.getN();
+        int k = inst.k;
+        for (int s = 0; s < numScenarios; s++) {
+            if (dijScenarios[s] == null || dijScenarios[s].length != n) {
+                throw new IllegalArgumentException("dijScenarios[" + s + "] 行数须等于实例单元数 n");
+            }
+            for (int i = 0; i < n; i++) {
+                if (dijScenarios[s][i] == null || dijScenarios[s][i].length != k) {
+                    throw new IllegalArgumentException("dijScenarios[" + s + "][" + i + "] 长度须等于区域数 k");
+                }
+            }
+        }
+        this.scenarioDij = new double[numScenarios][n][k];
+        this.scenarioDemands = new int[numScenarios][n];
+        this.scenarioDemandUpperBounds = new double[numScenarios];
+        this.scenarioMeans = new double[numScenarios];
+        this.scenarioLowerBounds = new double[numScenarios];
+        this.scenarioUpperBounds = new double[numScenarios];
+
+        double totalNominal = 0;
+        for (int i = 0; i < n; i++) {
+            totalNominal += inst.getAreas()[i].getActiveness()[0];
+        }
+        this.baseDemandUpperBound = (1 + r) * (totalNominal / k);
+
+        for (int s = 0; s < numScenarios; s++) {
+            double scenarioTotalMarginal = 0;
+            for (int i = 0; i < n; i++) {
+                double maxD = 0;
+                for (int j = 0; j < k; j++) {
+                    double v = dijScenarios[s][i][j];
+                    this.scenarioDij[s][i][j] = v;
+                    maxD = Math.max(maxD, v);
+                }
+                int di = (int) Math.max(1, Math.round(maxD));
+                this.scenarioDemands[s][i] = di;
+                scenarioTotalMarginal += di;
+            }
+            double muS = scenarioTotalMarginal / k;
+            this.scenarioMeans[s] = muS;
+            this.scenarioLowerBounds[s] = relativeBalanceDemandLower(scenarioTotalMarginal, r, k);
+            this.scenarioUpperBounds[s] = relativeBalanceDemandUpper(scenarioTotalMarginal, r, k);
+            this.scenarioDemandUpperBounds[s] = this.scenarioUpperBounds[s];
+        }
+        this.dijLowerM = null;
+        this.dijUpperM = null;
+    }
+
+    /** 是否使用 d_{ijs} 工作量与 T_s 相对平衡模型（用于测试/CSV 标记）。 */
+    public boolean usesAssignmentDependentWorkload() {
+        return useDijWorkloadModel;
+    }
+
+    public int getNumScenarios() {
+        return numScenarios;
+    }
+
+    // ---------- assignment-dependent CSV（机会约束侧独立配置，接口形态对齐 DRO，但不读写 DRO 内状态）----------
+
+    /**
+     * 训练用 CSV 根目录（目录下全部 .csv 按文件名排序后依次作为场景）。
+     * 默认路径为工程内常用的 cluster20 合成数据目录，可通过 {@link #configureAssignmentDependentCsvDirectories(String, String)} 覆盖。
+     */
+    private static volatile String chanceConstrainedAdTrainCsvDirectory =
+            "data/travel_dist_dual_values_filtered_by_date_cluster20_unit_synth142";
+    /** 样本外 CSV 目录；为 null 时与训练目录相同。 */
+    private static volatile String chanceConstrainedAdOosCsvDirectory = null;
+
+    /**
+     * 配置本类使用的 assignment-dependent 训练/样本外目录（与同工程中 DRO 侧同名静态方法语义一致，状态彼此独立）。
+     *
+     * @param trainDir 训练场景目录（非 null 且非空时写入）
+     * @param oosDir   样本外目录，null 表示与训练相同
+     */
+    public static void configureAssignmentDependentCsvDirectories(String trainDir, String oosDir) {
+        if (trainDir != null && !trainDir.isEmpty()) {
+            chanceConstrainedAdTrainCsvDirectory = trainDir;
+        }
+        chanceConstrainedAdOosCsvDirectory = oosDir;
+    }
+
+    public static String getAssignmentDependentTrainCsvDirectory() {
+        return chanceConstrainedAdTrainCsvDirectory;
+    }
+
+    public static String getAssignmentDependentOosCsvDirectory() {
+        return chanceConstrainedAdOosCsvDirectory != null
+                ? chanceConstrainedAdOosCsvDirectory
+                : chanceConstrainedAdTrainCsvDirectory;
+    }
+
+    private static File[] listAssignmentDependentCsvFilesSorted(File dir) {
+        File[] all = dir.listFiles((d, name) -> name != null && name.endsWith(".csv") && !name.startsWith("."));
+        if (all == null) {
+            return new File[0];
+        }
+        Arrays.sort(all, Comparator.comparing(File::getName));
+        return all;
+    }
+
+    /** 当前训练目录下 CSV 文件个数。 */
+    public static int countAssignmentDependentTrainingCsvFiles() {
+        return listAssignmentDependentCsvFilesSorted(new File(getAssignmentDependentTrainCsvDirectory())).length;
+    }
+
+    private static int readRegionCountFromCsvHeader(File csvFile) throws IOException {
+        try (BufferedReader reader = new BufferedReader(
+                new InputStreamReader(new FileInputStream(csvFile), "UTF-8"))) {
+            String line = reader.readLine();
+            if (line == null) {
+                return 0;
+            }
+            String[] headers = line.split(",");
+            return Math.max(0, headers.length - 1);
+        }
+    }
+
+    /**
+     * 读取单个 CSV 得到矩阵 [i][j]，j 为区域列（PointID + Region_* 表头约定）。
+     */
+    public static double[][] loadAssignmentDependentMatrixFromCsv(File csvFile, int n, int numRegions) throws IOException {
+        double[][] data = new double[n][numRegions];
+        for (int i = 0; i < n; i++) {
+            Arrays.fill(data[i], 0.0);
+        }
+        try (BufferedReader reader = new BufferedReader(
+                new InputStreamReader(new FileInputStream(csvFile), "UTF-8"))) {
+            String line = reader.readLine();
+            if (line == null) {
+                throw new IOException("空文件: " + csvFile.getName());
+            }
+            String[] headers = line.split(",");
+            int pHeader = headers.length - 1;
+            if (pHeader < numRegions) {
+                throw new IOException("CSV 区域列数 " + pHeader + " < 期望 " + numRegions + " : " + csvFile.getName());
+            }
+            while ((line = reader.readLine()) != null) {
+                String[] values = line.split(",");
+                if (values.length < 2) {
+                    continue;
+                }
+                try {
+                    int pointId = Integer.parseInt(values[0].trim());
+                    if (pointId < 0 || pointId >= n) {
+                        continue;
+                    }
+                    for (int j = 0; j < numRegions; j++) {
+                        String valueStr = values[j + 1].trim();
+                        if (!valueStr.equals("Null") && !valueStr.isEmpty()) {
+                            try {
+                                data[pointId][j] = Double.parseDouble(valueStr);
+                            } catch (NumberFormatException ignored) {
+                            }
+                        }
+                    }
+                } catch (NumberFormatException ignored) {
+                }
+            }
+        }
+        return data;
+    }
+
+    /**
+     * 从目录加载全部 CSV（按文件名排序），形状 [场景][i][j]。
+     *
+     * @param dir        训练目录
+     * @param n          单元数
+     * @param expectedK  实例区域数；须与 CSV 列数一致
+     */
+    public static double[][][] loadAssignmentDependentScenariosFromCsvDirectory(File dir, int n, int expectedK)
+            throws IOException {
+        if (!dir.isDirectory()) {
+            throw new IOException("不是目录: " + dir.getAbsolutePath());
+        }
+        File[] files = listAssignmentDependentCsvFilesSorted(dir);
+        if (files.length == 0) {
+            throw new IOException("目录中未找到 CSV: " + dir.getAbsolutePath());
+        }
+        int p = readRegionCountFromCsvHeader(files[0]);
+        if (p != expectedK) {
+            throw new IOException("CSV 区域列数 " + p + " 与实例 k=" + expectedK + " 不一致（首个文件 " + files[0].getName() + "）");
+        }
+        double[][][] scenarios = new double[files.length][n][p];
+        for (int k = 0; k < files.length; k++) {
+            scenarios[k] = loadAssignmentDependentMatrixFromCsv(files[k], n, p);
+        }
+        return scenarios;
+    }
+
+    /**
+     * 使用当前 {@link #getAssignmentDependentTrainCsvDirectory()} 下全部训练 CSV 构造机会约束模型。
+     */
+    public static ChanceConstrainedAlgo fromAssignmentDependentTrainingCsv(
+            Instance instance, double gamma, long seed, double r) throws IOException {
+        String trainDir = getAssignmentDependentTrainCsvDirectory();
+        double[][][] dij = loadAssignmentDependentScenariosFromCsvDirectory(new File(trainDir), instance.getN(), instance.k);
+        return new ChanceConstrainedAlgo(instance, dij, gamma, seed, r);
+    }
+
+    /**
+     * 样本外：在 {@link #getAssignmentDependentOosCsvDirectory()} 下枚举全部 CSV，
+     * 按各区 workload 与总 workload 的相对平衡检验满意度。
+     *
+     * @return 满足约束的文件比例；无有效文件时返回 -1
+     */
+    public static double testOutOfSamplePerformanceAssignmentDependentFromConfiguredCsv(
+            Instance instance,
+            ChanceConstrainedAlgo algo,
+            double r) {
+
+        String dataDir = getAssignmentDependentOosCsvDirectory();
+        File dir = new File(dataDir);
+        File[] allFiles = listAssignmentDependentCsvFilesSorted(dir);
+        if (allFiles.length == 0) {
+            System.err.println("错误: 在目录 " + dataDir + " 中未找到CSV文件");
+            return -1.0;
+        }
+
+        @SuppressWarnings("unchecked")
+        ArrayList<Integer>[] zones = algo.getZones();
+        int p = zones.length;
+        double coeffLower = (1.0 - r) / p;
+        double coeffUpper = (1.0 + r) / p;
+        int n = instance.getN();
+
+        int satisfiedScenarios = 0;
+        int totalTestScenarios = 0;
+
+        for (File testFile : allFiles) {
+            try {
+                double[][] testScenarioData = loadAssignmentDependentMatrixFromCsv(testFile, n, p);
+                totalTestScenarios++;
+                boolean scenarioSatisfied = true;
+
+                double totalWorkload = 0.0;
+                for (int kk = 0; kk < p; kk++) {
+                    if (zones[kk] == null || zones[kk].isEmpty()) {
+                        continue;
+                    }
+                    for (int areaId : zones[kk]) {
+                        totalWorkload += testScenarioData[areaId][kk];
+                    }
+                }
+
+                for (int j = 0; j < p; j++) {
+                    if (zones[j] == null || zones[j].isEmpty()) {
+                        continue;
+                    }
+                    double districtWorkload = 0.0;
+                    for (int areaId : zones[j]) {
+                        districtWorkload += testScenarioData[areaId][j];
+                    }
+                    double lowerBound = coeffLower * totalWorkload;
+                    double upperBound = coeffUpper * totalWorkload;
+                    if (districtWorkload < lowerBound || districtWorkload > upperBound) {
+                        scenarioSatisfied = false;
+                        break;
+                    }
+                }
+
+                if (scenarioSatisfied) {
+                    satisfiedScenarios++;
+                }
+            } catch (Exception e) {
+                System.err.println("错误: 处理测试文件 " + testFile.getName() + " 时出错: " + e.getMessage());
+            }
+        }
+
+        if (totalTestScenarios == 0) {
+            System.err.println("错误: 没有有效的测试场景");
+            return -1.0;
+        }
+
+        double out = (double) satisfiedScenarios / totalTestScenarios;
+        System.out.println(String.format(Locale.US, "样本外性能: %.4f (%d/%d 场景满足约束)",
+                out, satisfiedScenarios, totalTestScenarios));
+        return out;
+    }
+
+    private static double minWorkloadOverRegions(double[][][] scenarioDij, int s, int u) {
+        double m = scenarioDij[s][u][0];
+        for (int t = 1; t < scenarioDij[s][u].length; t++) {
+            m = Math.min(m, scenarioDij[s][u][t]);
+        }
+        return m;
+    }
+
+    private static double sumSmallestM(double[] values, int m) {
+        if (m <= 0 || values.length == 0) {
+            return 0.0;
+        }
+        int take = Math.min(m, values.length);
+        Arrays.sort(values);
+        double sum = 0;
+        for (int i = 0; i < take; i++) {
+            sum += values[i];
+        }
+        return sum;
+    }
+
+    /**
+     * 按当前 {@link #centers} 重算紧大 M f_{js}, g_{js}（依赖各区域中心 c_j）。
+     */
+    private void recomputeDijBigM() {
+        if (!useDijWorkloadModel || scenarioDij == null || centers == null || centers.isEmpty()) {
+            return;
+        }
+        int p = centers.size();
+        int n = inst.getN();
+        double lambda = (1.0 - r) / p;
+        double beta = (1.0 + r) / p;
+        dijLowerM = new double[numScenarios][p];
+        dijUpperM = new double[numScenarios][p];
+        int[] regionOfCenterId = new int[n];
+        Arrays.fill(regionOfCenterId, -1);
+        for (int j = 0; j < p; j++) {
+            regionOfCenterId[centers.get(j).getId()] = j;
+        }
+        int pm1 = Math.max(0, p - 1);
+
+        for (int s = 0; s < numScenarios; s++) {
+            for (int j = 0; j < p; j++) {
+                int cj = centers.get(j).getId();
+
+                double sumDij = 0;
+                for (int i = 0; i < n; i++) {
+                    sumDij += scenarioDij[s][i][j];
+                }
+
+                double[] qList = new double[n - 1];
+                int qi = 0;
+                for (int u = 0; u < n; u++) {
+                    if (u == cj) {
+                        continue;
+                    }
+                    int ru = regionOfCenterId[u];
+                    double dSelf = ru >= 0 ? scenarioDij[s][u][ru] : minWorkloadOverRegions(scenarioDij, s, u);
+                    qList[qi++] = (1.0 - beta) * scenarioDij[s][u][j] + beta * dSelf;
+                }
+                double sumQSmallest = sumSmallestM(qList, pm1);
+                double gjs = (1.0 - beta) * sumDij - sumQSmallest;
+                dijUpperM[s][j] = Math.max(1e-8, gjs);
+
+                double dCjj = scenarioDij[s][cj][j];
+                double sumMoverU = 0;
+                double[] deltaList = new double[n - 1];
+                int di = 0;
+                for (int u = 0; u < n; u++) {
+                    if (u == cj) {
+                        continue;
+                    }
+                    double mU;
+                    if (p <= 1) {
+                        mU = 0;
+                    } else {
+                        mU = Double.NEGATIVE_INFINITY;
+                        for (int kk = 0; kk < p; kk++) {
+                            if (kk == j) {
+                                continue;
+                            }
+                            mU = Math.max(mU, scenarioDij[s][u][kk]);
+                        }
+                    }
+                    sumMoverU += mU;
+                    int ru = regionOfCenterId[u];
+                    double dSelf = ru >= 0 ? scenarioDij[s][u][ru] : minWorkloadOverRegions(scenarioDij, s, u);
+                    deltaList[di++] = mU - dSelf;
+                }
+                double sumDeltaSmallest = sumSmallestM(deltaList, pm1);
+                double fjs = lambda * sumMoverU - (1.0 - lambda) * dCjj - lambda * sumDeltaSmallest;
+                dijLowerM[s][j] = Math.max(1e-8, fjs);
+            }
         }
     }
 
@@ -354,62 +780,90 @@ public class ChanceConstrainedAlgo {
             }
 
             // Capacity constraints for all scenarios
-
-            // Compute scenario-wise Big-M values based on
-            // f_s = (1 - alpha) * mu_s - d_[1]s  (lower-bound M)
-            // g_s = (p - 1 - alpha) * mu_s - sum_{m=1}^{p-1} d_[m]s  (upper-bound M)
-            // where alpha = r, p = number of regions (centers.size()).
             int p = centers.size();
-            double[] lowerM = new double[numScenarios]; // f_s
-            double[] upperM = new double[numScenarios]; // g_s
+            if (useDijWorkloadModel) {
+                recomputeDijBigM();
+                double lambda = (1.0 - r) / p;
+                double beta = (1.0 + r) / p;
+                for (int j = 0; j < p; j++) {
+                    for (int s = 0; s < numScenarios; s++) {
+                        GRBLinExpr lower = new GRBLinExpr();
+                        for (int i = 0; i < inst.getN(); i++) {
+                            for (int kk = 0; kk < p; kk++) {
+                                lower.addTerm(-lambda * scenarioDij[s][i][kk], x[i][kk]);
+                            }
+                            lower.addTerm(scenarioDij[s][i][j], x[i][j]);
+                        }
+                        lower.addTerm(dijLowerM[s][j], z[s]);
+                        model.addConstr(lower, GRB.GREATER_EQUAL, 0.0, "dij_cap_lower_" + j + "_" + s);
 
-            for (int s = 0; s < numScenarios; s++) {
-                // Collect demands for scenario s
-                double[] demands = new double[inst.getN()];
-                double scenarioTotalDemand = 0.0;
-                for (int i = 0; i < inst.getN(); i++) {
-                    demands[i] = scenarioDemands[s][i];
-                    scenarioTotalDemand += demands[i];
-                }
-
-                // mu_s: average demand per region under scenario s
-                double mu_s = scenarioTotalDemand / p;
-
-                // Sort demands in non-decreasing order to get d_[m]s
-                Arrays.sort(demands);
-
-                // d_[1]s is the smallest demand (index 0 in 0-based array)
-                double d1s = demands[0];
-
-                // sum_{m=1}^{p-1} d_[m]s (guard against p-1 > number of basic units)
-                int maxIndex = Math.min(p - 1, demands.length);
-                double sumFirstPminus1 = 0.0;
-                for (int m = 0; m < maxIndex; m++) {
-                    sumFirstPminus1 += demands[m];
-                }
-
-                // f_s for lower-bound constraint, g_s for upper-bound constraint
-                lowerM[s] = (1.0 - r) * mu_s - d1s;
-                upperM[s] = (p - 1.0 - r) * mu_s - sumFirstPminus1;
-            }
-
-            for (int j = 0; j < centers.size(); j++) {
-                for (int s = 0; s < numScenarios; s++) {
-                    GRBLinExpr exprUpper = new GRBLinExpr();
-                    GRBLinExpr exprLower = new GRBLinExpr();
-                    for (int i = 0; i < inst.getN(); i++) {
-                        exprUpper.addTerm(scenarioDemands[s][i], x[i][j]);
-                        exprLower.addTerm(scenarioDemands[s][i], x[i][j]);
+                        GRBLinExpr upper = new GRBLinExpr();
+                        for (int i = 0; i < inst.getN(); i++) {
+                            for (int kk = 0; kk < p; kk++) {
+                                upper.addTerm(beta * scenarioDij[s][i][kk], x[i][kk]);
+                            }
+                            upper.addTerm(-scenarioDij[s][i][j], x[i][j]);
+                        }
+                        upper.addTerm(-dijUpperM[s][j], z[s]);
+                        model.addConstr(upper, GRB.GREATER_EQUAL, 0.0, "dij_cap_upper_" + j + "_" + s);
                     }
-                    // Use scenario-wise Big-M values: g_s for upper, f_s for lower
-                    exprUpper.addTerm(-upperM[s], z[s]); // upper M: g_s
-                    exprLower.addTerm(lowerM[s], z[s]); // lower M: f_s
+                }
+            } else {
+                // Compute scenario-wise Big-M values based on
+                // f_s = (1 - alpha) * mu_s - d_[1]s  (lower-bound M)
+                // g_s = (p - 1 - alpha) * mu_s - sum_{m=1}^{p-1} d_[m]s  (upper-bound M)
+                // where alpha = r, p = number of regions (centers.size()).
+                double[] lowerM = new double[numScenarios]; // f_s
+                double[] upperM = new double[numScenarios]; // g_s
 
-                    // Use per-scenario capacity bounds L_s, U_s
-                    double Us = scenarioUpperBounds[s];
-                    double Ls = scenarioLowerBounds[s];
-                    model.addConstr(exprUpper, GRB.LESS_EQUAL, Us, "capacity_upper_" + j + "_" + s);
-                    model.addConstr(exprLower, GRB.GREATER_EQUAL, Ls, "capacity_lower_" + j + "_" + s);
+                for (int s = 0; s < numScenarios; s++) {
+                    // Collect demands for scenario s
+                    double[] demands = new double[inst.getN()];
+                    double scenarioTotalDemand = 0.0;
+                    for (int i = 0; i < inst.getN(); i++) {
+                        demands[i] = scenarioDemands[s][i];
+                        scenarioTotalDemand += demands[i];
+                    }
+
+                    // mu_s: average demand per region under scenario s
+                    double mu_s = scenarioTotalDemand / p;
+
+                    // Sort demands in non-decreasing order to get d_[m]s
+                    Arrays.sort(demands);
+
+                    // d_[1]s is the smallest demand (index 0 in 0-based array)
+                    double d1s = demands[0];
+
+                    // sum_{m=1}^{p-1} d_[m]s (guard against p-1 > number of basic units)
+                    int maxIndex = Math.min(p - 1, demands.length);
+                    double sumFirstPminus1 = 0.0;
+                    for (int m = 0; m < maxIndex; m++) {
+                        sumFirstPminus1 += demands[m];
+                    }
+
+                    // f_s for lower-bound constraint, g_s for upper-bound constraint
+                    lowerM[s] = (1.0 - r) * mu_s - d1s;
+                    upperM[s] = (p - 1.0 - r) * mu_s - sumFirstPminus1;
+                }
+
+                for (int j = 0; j < centers.size(); j++) {
+                    for (int s = 0; s < numScenarios; s++) {
+                        GRBLinExpr exprUpper = new GRBLinExpr();
+                        GRBLinExpr exprLower = new GRBLinExpr();
+                        for (int i = 0; i < inst.getN(); i++) {
+                            exprUpper.addTerm(scenarioDemands[s][i], x[i][j]);
+                            exprLower.addTerm(scenarioDemands[s][i], x[i][j]);
+                        }
+                        // Use scenario-wise Big-M values: g_s for upper, f_s for lower
+                        exprUpper.addTerm(-upperM[s], z[s]); // upper M: g_s
+                        exprLower.addTerm(lowerM[s], z[s]); // lower M: f_s
+
+                        // Use per-scenario capacity bounds L_s, U_s
+                        double Us = scenarioUpperBounds[s];
+                        double Ls = scenarioLowerBounds[s];
+                        model.addConstr(exprUpper, GRB.LESS_EQUAL, Us, "capacity_upper_" + j + "_" + s);
+                        model.addConstr(exprLower, GRB.GREATER_EQUAL, Ls, "capacity_lower_" + j + "_" + s);
+                    }
                 }
             }
 
@@ -784,18 +1238,39 @@ public class ChanceConstrainedAlgo {
         }
 
         // 约束22: 容量上下界约束 (只对选定的场景)
-        for (int j = 0; j < centers.size(); j++) {
-            // 实际上多一个场景就是多一些需求平衡约束，其他约束没什么变化
+        int p = centers.size();
+        for (int j = 0; j < p; j++) {
             for (int s : selectedScenarios) {
-                // 同一个和式，同时用于上下界约束
-                GRBLinExpr expr = new GRBLinExpr();
-                for (int i = 0; i < inst.getN(); i++) {
-                    expr.addTerm(scenarioDemands[s][i], x[i][j]);
+                if (useDijWorkloadModel) {
+                    double lambda = (1.0 - r) / p;
+                    double beta = (1.0 + r) / p;
+                    GRBLinExpr lower = new GRBLinExpr();
+                    for (int i = 0; i < inst.getN(); i++) {
+                        for (int kk = 0; kk < p; kk++) {
+                            lower.addTerm(-lambda * scenarioDij[s][i][kk], x[i][kk]);
+                        }
+                        lower.addTerm(scenarioDij[s][i][j], x[i][j]);
+                    }
+                    model.addConstr(lower, GRB.GREATER_EQUAL, 0.0, "dij_sub_lower_" + j + "_" + s);
+
+                    GRBLinExpr upper = new GRBLinExpr();
+                    for (int i = 0; i < inst.getN(); i++) {
+                        for (int kk = 0; kk < p; kk++) {
+                            upper.addTerm(beta * scenarioDij[s][i][kk], x[i][kk]);
+                        }
+                        upper.addTerm(-scenarioDij[s][i][j], x[i][j]);
+                    }
+                    model.addConstr(upper, GRB.GREATER_EQUAL, 0.0, "dij_sub_upper_" + j + "_" + s);
+                } else {
+                    GRBLinExpr expr = new GRBLinExpr();
+                    for (int i = 0; i < inst.getN(); i++) {
+                        expr.addTerm(scenarioDemands[s][i], x[i][j]);
+                    }
+                    double Us = scenarioUpperBounds[s];
+                    double Ls = scenarioLowerBounds[s];
+                    model.addConstr(expr, GRB.LESS_EQUAL, Us, "capacity_upper_" + j + "_" + s);
+                    model.addConstr(expr, GRB.GREATER_EQUAL, Ls, "capacity_lower_" + j + "_" + s);
                 }
-                double Us = scenarioUpperBounds[s];
-                double Ls = scenarioLowerBounds[s];
-                model.addConstr(expr, GRB.LESS_EQUAL, Us, "capacity_upper_" + j + "_" + s);
-                model.addConstr(expr, GRB.GREATER_EQUAL, Ls, "capacity_lower_" + j + "_" + s);
             }
         }
 
@@ -833,21 +1308,51 @@ public class ChanceConstrainedAlgo {
     // 检查所有场景的可行性
     private HashSet<Integer> checkFeasibility() {
         HashSet<Integer> feasibleScenarios = new HashSet<>();
+        int p = centers.size();
         for (int s = 0; s < numScenarios; s++) {
             boolean scenarioFeasible = true;
 
-            for (int j = 0; j < centers.size(); j++) {
-                double totalDemand = 0;
-                for (int i : zones[j]) {
-                    totalDemand += scenarioDemands[s][i];
+            if (useDijWorkloadModel) {
+                double lambda = (1.0 - r) / p;
+                double beta = (1.0 + r) / p;
+                double totalWorkload = 0;
+                for (int jj = 0; jj < p; jj++) {
+                    if (zones[jj] == null) {
+                        continue;
+                    }
+                    for (int i : zones[jj]) {
+                        totalWorkload += scenarioDij[s][i][jj];
+                    }
                 }
+                for (int j = 0; j < p; j++) {
+                    if (zones[j] == null || zones[j].isEmpty()) {
+                        continue;
+                    }
+                    double w = 0;
+                    for (int i : zones[j]) {
+                        w += scenarioDij[s][i][j];
+                    }
+                    double lo = lambda * totalWorkload;
+                    double hi = beta * totalWorkload;
+                    if (w < lo - 1e-7 || w > hi + 1e-7) {
+                        scenarioFeasible = false;
+                        break;
+                    }
+                }
+            } else {
+                for (int j = 0; j < centers.size(); j++) {
+                    double totalDemand = 0;
+                    for (int i : zones[j]) {
+                        totalDemand += scenarioDemands[s][i];
+                    }
 
-                double Us = scenarioUpperBounds[s];
-                double Ls = scenarioLowerBounds[s];
+                    double Us = scenarioUpperBounds[s];
+                    double Ls = scenarioLowerBounds[s];
 
-                if (totalDemand > Us || totalDemand < Ls) {
-                    scenarioFeasible = false;
-                    break;
+                    if (totalDemand > Us || totalDemand < Ls) {
+                        scenarioFeasible = false;
+                        break;
+                    }
                 }
             }
 
@@ -944,17 +1449,39 @@ public class ChanceConstrainedAlgo {
         }
 
         // 添加需求约束: 使用之前选定的场景
-        for (int j = 0; j < centers.size(); j++) {
+        int pConn = centers.size();
+        for (int j = 0; j < pConn; j++) {
             for (int s : selectedScenarios) {
-                // 同一个和式，同时用于上下界约束
-                GRBLinExpr expr = new GRBLinExpr();
-                for (int i = 0; i < inst.getN(); i++) {
-                    expr.addTerm(scenarioDemands[s][i], x[i][j]);
+                if (useDijWorkloadModel) {
+                    double lambda = (1.0 - r) / pConn;
+                    double beta = (1.0 + r) / pConn;
+                    GRBLinExpr lower = new GRBLinExpr();
+                    for (int i = 0; i < inst.getN(); i++) {
+                        for (int kk = 0; kk < pConn; kk++) {
+                            lower.addTerm(-lambda * scenarioDij[s][i][kk], x[i][kk]);
+                        }
+                        lower.addTerm(scenarioDij[s][i][j], x[i][j]);
+                    }
+                    model.addConstr(lower, GRB.GREATER_EQUAL, 0.0, "dij_conn_lower_" + j + "_" + s);
+
+                    GRBLinExpr upper = new GRBLinExpr();
+                    for (int i = 0; i < inst.getN(); i++) {
+                        for (int kk = 0; kk < pConn; kk++) {
+                            upper.addTerm(beta * scenarioDij[s][i][kk], x[i][kk]);
+                        }
+                        upper.addTerm(-scenarioDij[s][i][j], x[i][j]);
+                    }
+                    model.addConstr(upper, GRB.GREATER_EQUAL, 0.0, "dij_conn_upper_" + j + "_" + s);
+                } else {
+                    GRBLinExpr expr = new GRBLinExpr();
+                    for (int i = 0; i < inst.getN(); i++) {
+                        expr.addTerm(scenarioDemands[s][i], x[i][j]);
+                    }
+                    double Us = scenarioUpperBounds[s];
+                    double Ls = scenarioLowerBounds[s];
+                    model.addConstr(expr, GRB.LESS_EQUAL, Us, "capacity_upper_" + j + "_" + s);
+                    model.addConstr(expr, GRB.GREATER_EQUAL, Ls, "capacity_lower_" + j + "_" + s);
                 }
-                double Us = scenarioUpperBounds[s];
-                double Ls = scenarioLowerBounds[s];
-                model.addConstr(expr, GRB.LESS_EQUAL, Us, "capacity_upper_" + j + "_" + s);
-                model.addConstr(expr, GRB.GREATER_EQUAL, Ls, "capacity_lower_" + j + "_" + s);
             }
         }
 
@@ -1213,17 +1740,45 @@ public class ChanceConstrainedAlgo {
         }
 
         // 约束: 容量限制 (按场景创建约束，使用按场景的上下界)
+        int pSub = centers.size();
         for (int s = 0; s < numScenarios; s++) {
-            // 同一个和式，同时用于上下界约束
-            GRBLinExpr capacityExpr = new GRBLinExpr();
-            for (int i = 0; i < inst.getN(); i++) {
-                capacityExpr.addTerm(scenarioDemands[s][i], x[i]);
+            if (useDijWorkloadModel) {
+                double lambda = (1.0 - r) / pSub;
+                double beta = (1.0 + r) / pSub;
+                int c = centerIndex;
+                double fixedOther = 0.0;
+                for (int kk = 0; kk < pSub; kk++) {
+                    if (kk == c || zones[kk] == null) {
+                        continue;
+                    }
+                    for (int i : zones[kk]) {
+                        fixedOther += scenarioDij[s][i][kk];
+                    }
+                }
+                // W_{cs}=sum_i d_{ics}x_i, T_s=sum_i d_{ics}x_i+fixedOther；与全模型一致
+                GRBLinExpr lower = new GRBLinExpr();
+                for (int i = 0; i < inst.getN(); i++) {
+                    double dic = scenarioDij[s][i][c];
+                    lower.addTerm((1.0 - lambda) * dic, x[i]);
+                }
+                model.addConstr(lower, GRB.GREATER_EQUAL, lambda * fixedOther, "dij_single_lower_" + centerIndex + "_" + s);
+
+                GRBLinExpr upper = new GRBLinExpr();
+                for (int i = 0; i < inst.getN(); i++) {
+                    double dic = scenarioDij[s][i][c];
+                    upper.addTerm((beta - 1.0) * dic, x[i]);
+                }
+                model.addConstr(upper, GRB.GREATER_EQUAL, -beta * fixedOther, "dij_single_upper_" + centerIndex + "_" + s);
+            } else {
+                GRBLinExpr capacityExpr = new GRBLinExpr();
+                for (int i = 0; i < inst.getN(); i++) {
+                    capacityExpr.addTerm(scenarioDemands[s][i], x[i]);
+                }
+                double Us = scenarioUpperBounds[s];
+                double Ls = scenarioLowerBounds[s];
+                model.addConstr(capacityExpr, GRB.LESS_EQUAL, Us, "capacity_upper_" + centerIndex + "_" + s);
+                model.addConstr(capacityExpr, GRB.GREATER_EQUAL, Ls, "capacity_lower_" + centerIndex + "_" + s);
             }
-            // 使用按场景的上下界
-            double Us = scenarioUpperBounds[s];
-            double Ls = scenarioLowerBounds[s];
-            model.addConstr(capacityExpr, GRB.LESS_EQUAL, Us, "capacity_upper_" + centerIndex + "_" + s);
-            model.addConstr(capacityExpr, GRB.GREATER_EQUAL, Ls, "capacity_lower_" + centerIndex + "_" + s);
         }
 
         // 目标函数: 最小化总距离

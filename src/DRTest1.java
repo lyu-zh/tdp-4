@@ -33,12 +33,12 @@ public class DRTest1 {
         // Experiment configuration
         double E = 50.0; // Expected value
         double[] RSDValues = {0.125, 0.25}; // Relative standard deviation array
-        double[] rValues = {0.5, 0.4, 0.3}; // Tolerance parameter values
+        double[] rValues = {0.1}; // Tolerance parameter values
         double[] gammaValues = {0.4, 0.3, 0.2, 0.1}; // Chance constraint risk parameter
-        int[] scenarioNumValues = {1000}; // Number of scenarios
-        boolean[] useD1Values = {true, false}; // Whether to use D_1 or D_2 ambiguity set
-        double[] delta1Values = {2}; // D_2 ambiguity set parameter delta1
-        double[] delta2Values = {4}; // D_2 ambiguity set parameter delta2
+        int[] scenarioNumValues = {100}; // Number of scenarios
+        boolean[] useD1Values = {false}; // Whether to use D_1 or D_2 ambiguity set
+        double[] delta1Values = {1, 2, 4}; // D_2 ambiguity set parameter delta1
+        double[] delta2Values = {2, 4, 8}; // D_2 ambiguity set parameter delta2
         boolean[] useJointChanceValues = {false}; // Whether to use joint chance constraint
         boolean[] useExactMethodValues = {false}; // Whether to use exact method or approximation
         boolean[] useImprovedModelValues = {false}; // Whether to use improved model (shortest path distance + workload constraint)
@@ -49,8 +49,8 @@ public class DRTest1 {
         long seed = 12345678; // Random seed
 
         long testSeed = seed + 1000;
-        int numTestScenarios = 5000; // For standard model, number of test scenarios to generate
-        int numTrainingScenarios = 100; // For assignment-dependent model, 已弃用（现在使用全部数据作为训练和测试）
+        int numTestScenarios = 100; // For standard model, number of test scenarios to generate
+        int numTrainingScenarios = 100; // For assignment-dependent model, 已弃用（保留接口）；训练/OOS 目录见 syncAssignmentDependentDirsForRsd
 
         // Get start time for filename
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd_HHmmss");
@@ -121,7 +121,7 @@ public class DRTest1 {
                 for (File file : allFiles) {
                     String fileName = file.getName();
                     // 匹配GG20-和GG50-开头的文件
-                    if (fileName.startsWith("GG50-5")) {
+                    if (fileName.startsWith("GG50-3")) {
                         instanceFiles.add(file);
                         System.out.println("找到数据文件: " + fileName);
                     }
@@ -138,13 +138,24 @@ public class DRTest1 {
             // Iterate through all instance files
             for (File instanceFile : instanceFiles) {
                 String instanceName = instanceFile.getName();
+                Instance instanceMeta = new Instance(instanceFile.getPath());
+                int numUnitsForCsv = instanceMeta.getN();
+                int numRegionsForCsv = instanceMeta.k;
 
                 // Iterate through all parameter combinations
                 for (double RSD : RSDValues) {
+                    if (useAssignmentDependentValue) {
+                        syncAssignmentDependentDirsForRsd(RSD);
+                    }
                     for (double r : rValues) {
-                        for (double gamma : gammaValues) {
+                        int[] minGammaIndexToSkipByUseD1 = new int[useD1Values.length];
+                        Arrays.fill(minGammaIndexToSkipByUseD1, Integer.MAX_VALUE);
+                        for (int gammaIndex = 0; gammaIndex < gammaValues.length; gammaIndex++) {
+                            double gamma = gammaValues[gammaIndex];
+                            boolean skipHigherUseD1ForCurrentGamma = false;
                             for (int numScenarios : scenarioNumValues) {
-                                for (boolean useD1 : useD1Values) {
+                                for (int useD1Index = 0; useD1Index < useD1Values.length; useD1Index++) {
+                                    boolean useD1 = useD1Values[useD1Index];
                                     // For D_1, delta values are not used, but we still need to iterate
                                     // For D_2, iterate through delta values
                                     if (useD1) {
@@ -155,6 +166,22 @@ public class DRTest1 {
                                                         for (int avgDistMethod : avgDistMethodValues) {
                                                         // 只有在使用改进模型时才测试avgDistMethod
                                                         // if (!useImprovedModel && avgDistMethod != 1) continue;
+                                                        if (gammaIndex >= minGammaIndexToSkipByUseD1[useD1Index]) {
+                                                            writeSkippedExperimentRow(
+                                                                    csvWriter, instanceName, numUnitsForCsv, numRegionsForCsv,
+                                                                    RSD, r, gamma, numScenarios, useD1, 0.0, 0.0,
+                                                                    useJointChance, useExactMethod, useImprovedModel,
+                                                                    useAssignmentDependentValue, avgDistMethod);
+                                                            continue;
+                                                        }
+                                                        if (useD1Index > 0 && skipHigherUseD1ForCurrentGamma) {
+                                                            writeSkippedExperimentRow(
+                                                                    csvWriter, instanceName, numUnitsForCsv, numRegionsForCsv,
+                                                                    RSD, r, gamma, numScenarios, useD1, 0.0, 0.0,
+                                                                    useJointChance, useExactMethod, useImprovedModel,
+                                                                    useAssignmentDependentValue, avgDistMethod);
+                                                            continue;
+                                                        }
                                                         // Print current experiment information
                                                         System.out.println("current inst number:" + cnt + "    >>>>>>>>>>>Running experiment:");
                                                         cnt++;
@@ -296,21 +323,63 @@ public class DRTest1 {
                                                         } else if (objectiveValue == -1 || objectiveValue == Double.MAX_VALUE) {
                                                             System.out.println("Warning: Objective value is invalid for instance: " + instanceName);
                                                         }
+
+                                                        boolean nonOptimal = isNonOptimalResult(
+                                                                errorMessage, solveSuccess, objectiveValue);
+                                                        if (nonOptimal) {
+                                                            if (useD1Index == 0 && useD1Values.length > 1) {
+                                                                if (!skipHigherUseD1ForCurrentGamma) {
+                                                                    System.out.println("Prune enabled: skip harder useD1 settings for current (RSD, r, gamma).");
+                                                                }
+                                                                skipHigherUseD1ForCurrentGamma = true;
+                                                            }
+                                                            boolean propagatedGammaPrune = false;
+                                                            for (int harderUseD1Index = useD1Index; harderUseD1Index < useD1Values.length; harderUseD1Index++) {
+                                                                int nextGammaIndex = gammaIndex + 1;
+                                                                if (nextGammaIndex < minGammaIndexToSkipByUseD1[harderUseD1Index]) {
+                                                                    minGammaIndexToSkipByUseD1[harderUseD1Index] = nextGammaIndex;
+                                                                    propagatedGammaPrune = true;
+                                                                }
+                                                            }
+                                                            if (propagatedGammaPrune) {
+                                                                System.out.println("Prune enabled: skip smaller-gamma settings from next gamma for current and harder useD1 levels.");
+                                                            }
+                                                        }
                                                     }
                                                 }
                                             }
                                         }
                                     } else {
-                                        // Use D_2: iterate through delta values
-                                        for (double delta1 : delta1Values) {
-                                            for (double delta2 : delta2Values) {
-                                                if (delta2 <= delta1) continue; // delta2 must be greater than delta1
+                                        // Use D_2: iterate through paired delta values
+                                        if (delta1Values.length != delta2Values.length) {
+                                            throw new IllegalArgumentException("delta1Values and delta2Values must have the same length for paired iteration.");
+                                        }
+                                        for (int deltaIndex = 0; deltaIndex < delta1Values.length; deltaIndex++) {
+                                            double delta1 = delta1Values[deltaIndex];
+                                            double delta2 = delta2Values[deltaIndex];
+                                            if (delta2 <= delta1) continue; // delta2 must be greater than delta1
                                                 for (boolean useJointChance : useJointChanceValues) {
                                                     for (boolean useExactMethod : useExactMethodValues) {
                                                         for (boolean useImprovedModel : useImprovedModelValues) {
                                                                 for (int avgDistMethod : avgDistMethodValues) {
                                                                 // 只有在使用改进模型时才测试avgDistMethod
                                                                 // if (!useImprovedModel && avgDistMethod != 1) continue;
+                                                                if (gammaIndex >= minGammaIndexToSkipByUseD1[useD1Index]) {
+                                                                    writeSkippedExperimentRow(
+                                                                            csvWriter, instanceName, numUnitsForCsv, numRegionsForCsv,
+                                                                            RSD, r, gamma, numScenarios, useD1, delta1, delta2,
+                                                                            useJointChance, useExactMethod, useImprovedModel,
+                                                                            useAssignmentDependentValue, avgDistMethod);
+                                                                    continue;
+                                                                }
+                                                                if (useD1Index > 0 && skipHigherUseD1ForCurrentGamma) {
+                                                                    writeSkippedExperimentRow(
+                                                                            csvWriter, instanceName, numUnitsForCsv, numRegionsForCsv,
+                                                                            RSD, r, gamma, numScenarios, useD1, delta1, delta2,
+                                                                            useJointChance, useExactMethod, useImprovedModel,
+                                                                            useAssignmentDependentValue, avgDistMethod);
+                                                                    continue;
+                                                                }
                                                                 // Print current experiment information
                                                                 System.out.println("current inst number:" + cnt + "    >>>>>>>>>>>Running experiment:");
                                                                 cnt++;
@@ -456,11 +525,32 @@ public class DRTest1 {
                                                                 } else if (objectiveValue == -1 || objectiveValue == Double.MAX_VALUE) {
                                                                     System.out.println("Warning: Objective value is invalid for instance: " + instanceName);
                                                                 }
+
+                                                                boolean nonOptimal = isNonOptimalResult(
+                                                                        errorMessage, solveSuccess, objectiveValue);
+                                                                if (nonOptimal) {
+                                                                    if (useD1Index == 0 && useD1Values.length > 1) {
+                                                                        if (!skipHigherUseD1ForCurrentGamma) {
+                                                                            System.out.println("Prune enabled: skip harder useD1 settings for current (RSD, r, gamma).");
+                                                                        }
+                                                                        skipHigherUseD1ForCurrentGamma = true;
+                                                                    }
+                                                                    boolean propagatedGammaPrune = false;
+                                                                    for (int harderUseD1Index = useD1Index; harderUseD1Index < useD1Values.length; harderUseD1Index++) {
+                                                                        int nextGammaIndex = gammaIndex + 1;
+                                                                        if (nextGammaIndex < minGammaIndexToSkipByUseD1[harderUseD1Index]) {
+                                                                            minGammaIndexToSkipByUseD1[harderUseD1Index] = nextGammaIndex;
+                                                                            propagatedGammaPrune = true;
+                                                                        }
+                                                                    }
+                                                                    if (propagatedGammaPrune) {
+                                                                        System.out.println("Prune enabled: skip smaller-gamma settings from next gamma for current and harder useD1 levels.");
+                                                                    }
+                                                                }
                                                             }
                                                         }
                                                     }
                                                 }
-                                            }
                                         }
                                     }
                                 }
@@ -481,6 +571,72 @@ public class DRTest1 {
         }
 
         System.out.println("Experiment completed, results saved to " + outputCSVPath);
+    }
+
+    /**
+     * 与 data_process/generate_assignment_dependent_synthetic_matrices.py 生成的目录对齐：
+     * RSD=0.125 → 训练 data/ad_t125，样本外 data/ad_e125；RSD=0.25 → data/ad_t25 / data/ad_e25。
+     */
+    private static void syncAssignmentDependentDirsForRsd(double rsd) {
+        if (Math.abs(rsd - 0.125) < 1e-9) {
+            DistributionallyRobustAlgo.configureAssignmentDependentCsvDirectories(
+                    "data/ad_t125", "data/ad_e125");
+        } else if (Math.abs(rsd - 0.25) < 1e-9) {
+            DistributionallyRobustAlgo.configureAssignmentDependentCsvDirectories(
+                    "data/ad_t25", "data/ad_e25");
+        } else {
+            DistributionallyRobustAlgo.configureAssignmentDependentCsvDirectories(
+                    "data/travel_dist_dual_values_filtered_by_date_cluster20_unit_synth142", null);
+        }
+    }
+
+    private static boolean isNonOptimalResult(String errorMessage, boolean solveSuccess, double objectiveValue) {
+        return errorMessage != null
+                || !solveSuccess
+                || objectiveValue == -1
+                || objectiveValue == Double.MAX_VALUE;
+    }
+
+    private static void writeSkippedExperimentRow(
+            BufferedWriter csvWriter,
+            String instanceName,
+            int numUnits,
+            int numRegions,
+            double rsd,
+            double r,
+            double gamma,
+            int numScenarios,
+            boolean useD1,
+            double delta1,
+            double delta2,
+            boolean useJointChance,
+            boolean useExactMethod,
+            boolean useImprovedModel,
+            boolean useAssignmentDependent,
+            int avgDistMethod) throws IOException {
+        csvWriter.write(String.format(
+                "%s,%d,%d,%.3f,%.1f,%.1f,%d,%s,%.2f,%.2f,%s,%s,%s,%s,%d,%.4f,%.3f,%.4f,%.4f,%s,%d,%d,%d,%s,%s",
+                instanceName, numUnits, numRegions, rsd, r, gamma, numScenarios,
+                useD1 ? "true" : "false",
+                delta1, delta2,
+                useJointChance ? "true" : "false",
+                useExactMethod ? "true" : "false",
+                useImprovedModel ? "true" : "false",
+                useAssignmentDependent ? "true" : "false",
+                avgDistMethod,
+                -1.0,
+                -1.0,
+                -1.0,
+                -1.0,
+                "-1",
+                -1,
+                -1,
+                -1,
+                "-1",
+                "-1"
+        ));
+        csvWriter.newLine();
+        csvWriter.flush();
     }
 
     /**
@@ -753,9 +909,18 @@ public class DRTest1 {
         return outOfSamplePerformance;
     }
 
+    private static File[] listAssignmentDependentCsvFilesForDrTest(File dir) {
+        File[] all = dir.listFiles((d, name) -> name != null && name.endsWith(".csv") && !name.startsWith("."));
+        if (all == null) {
+            return new File[0];
+        }
+        Arrays.sort(all, (f1, f2) -> f1.getName().compareTo(f2.getName()));
+        return all;
+    }
+
     /**
      * Tests the out-of-sample performance for assignment-dependent model
-     * Uses all CSV files as test data (与训练数据相同，使用全部数据)
+     * 使用 {@link DistributionallyRobustAlgo#getAssignmentDependentOosCsvDirectory()} 下全部 CSV 作为测试场景。
      *
      * @param instance         The problem instance
      * @param algo             The algorithm with a computed solution
@@ -769,19 +934,15 @@ public class DRTest1 {
             double r,
             int numTrainingScenarios) {
 
-        // Get all CSV files from the directory (使用与训练数据相同的目录)
-        String dataDir = "data/travel_dist_dual_values_filtered_by_date_cluster20_unit_synth142";
+        String dataDir = DistributionallyRobustAlgo.getAssignmentDependentOosCsvDirectory();
         File dir = new File(dataDir);
-        File[] allFiles = dir.listFiles((d, name) -> name.endsWith(".csv") && name.startsWith("travel_dist_dual_values_p3"));
+        File[] allFiles = listAssignmentDependentCsvFilesForDrTest(dir);
         
         if (allFiles == null || allFiles.length == 0) {
             System.err.println("错误: 在目录 " + dataDir + " 中未找到CSV文件");
             return -1.0;
         }
-        
-        // Sort files to ensure consistent ordering
-        java.util.Arrays.sort(allFiles, (f1, f2) -> f1.getName().compareTo(f2.getName()));
-        
+
         // 使用全部文件作为测试数据
         int numTestFiles = allFiles.length;
         System.out.println("使用全部 " + numTestFiles + " 个CSV文件作为测试数据");
@@ -920,15 +1081,13 @@ public class DRTest1 {
             Instance instance,
             DistributionallyRobustAlgo algo,
             double r) {
-        String dataDir = "data/travel_dist_dual_values_filtered_by_date_cluster20_unit_synth142";
+        String dataDir = DistributionallyRobustAlgo.getAssignmentDependentOosCsvDirectory();
         File dir = new File(dataDir);
-        File[] allFiles = dir.listFiles((d, name) -> name.endsWith(".csv") && name.startsWith("travel_dist_dual_values_p3"));
+        File[] allFiles = listAssignmentDependentCsvFilesForDrTest(dir);
 
         if (allFiles == null || allFiles.length == 0) {
             throw new RuntimeException("在目录 " + dataDir + " 中未找到CSV文件");
         }
-
-        Arrays.sort(allFiles, (f1, f2) -> f1.getName().compareTo(f2.getName()));
 
         ArrayList<Integer>[] zones = algo.getZones();
         int p = zones.length;

@@ -17,9 +17,9 @@ public class GabrielGraphSmallInstanceGenerator {
         
         // 定义要生成的实例参数
         // 150点：中心点数 6 和 8
-        int[] nodeCounts = {100}; // 节点数量
+        int[] nodeCounts = {20}; // 节点数量
         int[][] districtCounts = {
-            {6, 6, 8, 8}      // 对应 150 节点elsarticle-template-harv
+            {3}      // 对应 150 节点elsarticle-template-harv
         };
         
         System.out.println("开始批量生成 Gabriel Graph 小规模实例...");

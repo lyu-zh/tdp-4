@@ -34,6 +34,50 @@ public class DistributionallyRobustAlgo {
     private int numAssignmentDependentScenarios; // assignment-dependent场景数量
     private int numRegionsForAssignmentDependent; // assignment-dependent模型中的区域数量p
 
+    /**
+     * 训练用 CSV 目录（目录下所有 .csv 按文件名排序后依次作为场景）。
+     * 默认兼容旧路径；可通过 {@link #configureAssignmentDependentCsvDirectories} 切换为合成数据目录。
+     */
+    private static volatile String assignmentDependentTrainCsvDirectory =
+            "data/travel_dist_dual_values_filtered_by_date_cluster20_unit_synth142";
+    /**
+     * 样本外/诊断用 CSV 目录；为 null 时与训练目录相同。
+     */
+    private static volatile String assignmentDependentOosCsvDirectory = null;
+
+    /**
+     * 配置 assignment-dependent 模式下读取 CSV 的根目录（例如 data/ad_t125 与 data/ad_e125）。
+     *
+     * @param trainDir 训练场景目录（非 null）
+     * @param oosDir   样本外场景目录，null 表示与训练相同
+     */
+    public static void configureAssignmentDependentCsvDirectories(String trainDir, String oosDir) {
+        if (trainDir != null && !trainDir.isEmpty()) {
+            assignmentDependentTrainCsvDirectory = trainDir;
+        }
+        assignmentDependentOosCsvDirectory = oosDir;
+    }
+
+    public static String getAssignmentDependentOosCsvDirectory() {
+        return assignmentDependentOosCsvDirectory != null
+                ? assignmentDependentOosCsvDirectory
+                : assignmentDependentTrainCsvDirectory;
+    }
+
+    /** 当前 assignment-dependent 训练场景 CSV 所在目录（与 {@link #configureAssignmentDependentCsvDirectories} 一致）。 */
+    public static String getAssignmentDependentTrainCsvDirectory() {
+        return assignmentDependentTrainCsvDirectory;
+    }
+
+    private static File[] listAssignmentDependentCsvFiles(File dir) {
+        File[] all = dir.listFiles((d, name) -> name != null && name.endsWith(".csv") && !name.startsWith("."));
+        if (all == null) {
+            return new File[0];
+        }
+        Arrays.sort(all, Comparator.comparing(File::getName));
+        return all;
+    }
+
     // 分布鲁棒模型的参数
     private double[] meanVector; // 样本均值向量（对于assignment-dependent模型，维度为N*p）
     private double[][] covarianceMatrix; // 样本协方差矩阵（对于assignment-dependent模型，维度为(N*p)×(N*p)）
@@ -609,19 +653,16 @@ public class DistributionallyRobustAlgo {
      * 从 cluster20 对应目录下的全部CSV文件读取（训练数据）
      */
     private void loadAssignmentDependentData() {
-        String dataDir = "data/travel_dist_dual_values_filtered_by_date_cluster20_unit_synth142";
+        String dataDir = assignmentDependentTrainCsvDirectory;
         java.io.File dir = new java.io.File(dataDir);
-        java.io.File[] allFiles = dir.listFiles((d, name) -> name.endsWith(".csv") && name.startsWith("travel_dist_dual_values_p3_"));
+        java.io.File[] allFiles = listAssignmentDependentCsvFiles(dir);
         
         if (allFiles == null || allFiles.length == 0) {
             System.err.println("错误: 在目录 " + dataDir + " 中未找到CSV文件");
             return;
         }
-        
-        // 排序文件以确保一致性
-        Arrays.sort(allFiles, (f1, f2) -> f1.getName().compareTo(f2.getName()));
-        
-        // 使用全部文件作为训练数据
+
+        // 使用全部文件作为训练数据（已在 listAssignmentDependentCsvFiles 中按文件名排序）
         java.io.File[] files = allFiles;
         
         System.out.println("加载全部 " + files.length + " 个CSV文件作为训练数据");
@@ -2269,7 +2310,7 @@ public class DistributionallyRobustAlgo {
                     return false;
                 }
             } else if (shouldUseD1CopositiveSdpApprox()) {
-                boolean ok = iterateD1SdpSeparation(model, x, globalStartTime, 200, "D1-SDP分离");
+                boolean ok = iterateD1SdpSeparation(model, x, globalStartTime, 100, "D1-SDP分离");
                 if (!ok) {
                     int status = model.get(GRB.IntAttr.Status);
                     this.statusCode = status;
