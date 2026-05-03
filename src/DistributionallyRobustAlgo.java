@@ -1680,7 +1680,7 @@ public class DistributionallyRobustAlgo {
     }
 
     private ArrayList<Integer> selectInitialCenters() throws GRBException {
-        int InitialNum = 5; // 改为10个场景
+        int InitialNum = 10; // 改为10个场景
         ArrayList<Integer> candidateCenters = new ArrayList<>();
         HashMap<Integer, Integer> centerFrequency = new HashMap<>();
 
@@ -1940,6 +1940,7 @@ public class DistributionallyRobustAlgo {
 
             // 求解模型
             model.optimize();
+            logMipSolveOutcome(model, "确保连通性-精确方法-迭代" + cutIteration);
 
             // 检查时间限制
             if (System.currentTimeMillis() - globalStartTime > GLOBAL_TIME_LIMIT_MS) {
@@ -2160,6 +2161,7 @@ public class DistributionallyRobustAlgo {
                     
                     // 求解模型
                     model.optimize();
+                    logMipSolveOutcome(model, "生成初始解-支撑超平面cut-迭代" + cutIteration);
                     
                     // 记录求解时间
                     long solveTime = System.currentTimeMillis() - solveStartTime;
@@ -2348,6 +2350,7 @@ public class DistributionallyRobustAlgo {
             } else {
                 // 直接求解模型
                 model.optimize();
+                logMipSolveOutcome(model, "生成初始解-直接求解");
                 
                 // 验证求解状态（检查是否是全局最优）
                 if (useExactMethod && useRelativeBalance) {
@@ -2549,6 +2552,7 @@ public class DistributionallyRobustAlgo {
 
             System.out.println("【" + logTag + "】第 " + it + " 次迭代，求解主问题...");
             model.optimize();
+            logMipSolveOutcome(model, logTag + "-主问题MIP-迭代" + it);
             model.set(GRB.DoubleParam.TimeLimit, oldLimit);
 
             int status = model.get(GRB.IntAttr.Status);
@@ -2793,6 +2797,7 @@ public class DistributionallyRobustAlgo {
                 cModel.addLmiConstr(lmi2, "lmi_z_minus_e11_vaug_minus_n1_psd");
 
                 cModel.solve();
+                logCoptSdpSolveOutcome(cModel, "D1-SDP单侧 attempt=" + attempt);
 
                 int status = cModel.getIntAttr(copt.IntAttr.LpStatus);
                 int hasLpSol = cModel.getIntAttr(copt.IntAttr.HasLpSol);
@@ -3001,6 +3006,7 @@ public class DistributionallyRobustAlgo {
                 cModel.addLmiConstr(lmi3, "lmi_union_z_minus_e11_vU_minus_n2_psd");
 
                 cModel.solve();
+                logCoptSdpSolveOutcome(cModel, "D1-SDP并事件 attempt=" + attempt);
 
                 int status = cModel.getIntAttr(copt.IntAttr.LpStatus);
                 int hasLpSol = cModel.getIntAttr(copt.IntAttr.HasLpSol);
@@ -3064,6 +3070,7 @@ public class DistributionallyRobustAlgo {
 
             System.out.println("【" + logTag + "】第 " + it + " 次迭代，求解主问题...");
             model.optimize();
+            logMipSolveOutcome(model, logTag + "-主问题MIP-迭代" + it);
             model.set(GRB.DoubleParam.TimeLimit, oldLimit);
 
             int status = model.get(GRB.IntAttr.Status);
@@ -3139,6 +3146,7 @@ public class DistributionallyRobustAlgo {
             model.set(GRB.DoubleParam.TimeLimit, iterTimeSec);
             System.out.println("【" + logTag + "】第 " + it + " 次迭代，求解主问题...");
             model.optimize();
+            logMipSolveOutcome(model, logTag + "-主问题MIP-迭代" + it);
             model.set(GRB.DoubleParam.TimeLimit, oldLimit);
 
             int status = model.get(GRB.IntAttr.Status);
@@ -3182,6 +3190,7 @@ public class DistributionallyRobustAlgo {
             model.set(GRB.DoubleParam.TimeLimit, iterTimeSec);
             System.out.println("【" + logTag + "】第 " + it + " 次迭代，求解主问题...");
             model.optimize();
+            logMipSolveOutcome(model, logTag + "-主问题MIP-迭代" + it);
             model.set(GRB.DoubleParam.TimeLimit, oldLimit);
 
             int status = model.get(GRB.IntAttr.Status);
@@ -3573,6 +3582,7 @@ public class DistributionallyRobustAlgo {
                 cModel.addLmiConstr(lmiSoc, "d2_lmi_soc");
 
                 cModel.solve();
+                logCoptSdpSolveOutcome(cModel, "D2-SDP-SOCP单侧 attempt=" + attempt);
 
                 int status = cModel.getIntAttr(copt.IntAttr.LpStatus);
                 int hasLpSol = cModel.getIntAttr(copt.IntAttr.HasLpSol);
@@ -3804,6 +3814,7 @@ public class DistributionallyRobustAlgo {
                 cModel.addLmiConstr(lmiSoc, "d2_union_lmi_soc");
 
                 cModel.solve();
+                logCoptSdpSolveOutcome(cModel, "D2-SDP-SOCP并事件 attempt=" + attempt);
 
                 int status = cModel.getIntAttr(copt.IntAttr.LpStatus);
                 int hasLpSol = cModel.getIntAttr(copt.IntAttr.HasLpSol);
@@ -6834,6 +6845,7 @@ public class DistributionallyRobustAlgo {
                         
                         // 求解模型
                         model.optimize();
+                        logMipSolveOutcome(model, "确保连通性-支撑超平面cut-迭代" + cutIteration);
                         
                         // 恢复原始时间限制
                         model.set(GRB.DoubleParam.TimeLimit, originalTimeLimit);
@@ -7053,6 +7065,7 @@ public class DistributionallyRobustAlgo {
                             
                             // 求解模型
                             model.optimize();
+                            logMipSolveOutcome(model, "确保连通性(加约束后)-支撑超平面cut-迭代" + cutIteration);
                             
                             // 恢复原始时间限制
                             model.set(GRB.DoubleParam.TimeLimit, originalTimeLimit);
@@ -7182,6 +7195,7 @@ public class DistributionallyRobustAlgo {
                     } else {
                         // 不使用支撑超平面cut，直接求解模型
                         model.optimize();
+                        logMipSolveOutcome(model, "确保连通性-近似直接MIP-外层迭代" + iteration);
 
                         // Update time limit for next iteration
                         remainingTimeMs = GLOBAL_TIME_LIMIT_MS - (System.currentTimeMillis() - globalStartTime);
@@ -8517,6 +8531,46 @@ public class DistributionallyRobustAlgo {
         if (!solutionSet.isEmpty()) {
             infeasibleSolutions.add(solutionSet);
             System.out.println("【生成初始解】记录不可行解，包含 " + solutionSet.size() + " 个变量，当前共有 " + infeasibleSolutions.size() + " 个割约束");
+        }
+    }
+
+    /**
+     * 在每次 Gurobi {@code model.optimize()} 之后打印一行 MIP 求解摘要（成功或失败均有输出）。
+     */
+    private void logMipSolveOutcome(GRBModel model, String context) {
+        try {
+            int status = model.get(GRB.IntAttr.Status);
+            boolean ok = (status == GRB.OPTIMAL || status == GRB.SUBOPTIMAL);
+            if (ok) {
+                try {
+                    double obj = model.get(GRB.DoubleAttr.ObjVal);
+                    System.out.println(String.format("【MIP-成功】%s  status=%d  ObjVal=%.6f", context, status, obj));
+                } catch (GRBException e) {
+                    System.out.println(String.format("【MIP-成功】%s  status=%d  (无法读取 ObjVal: %s)", context, status, e.getMessage()));
+                }
+            } else {
+                System.out.println(String.format("【MIP-失败】%s  status=%d", context, status));
+            }
+        } catch (GRBException e) {
+            System.out.println("【MIP-失败】" + context + "  无法读取求解状态: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 在每次 COPT {@code cModel.solve()}（SDP/SOCP 子问题）之后打印一行求解摘要。
+     * COPT 中 LpStatus==1 表示最优；其余视为非最优/失败（与现有证书逻辑一致）。
+     */
+    private void logCoptSdpSolveOutcome(copt.Model cModel, String context) {
+        try {
+            int status = cModel.getIntAttr(copt.IntAttr.LpStatus);
+            if (status == 1) {
+                double val = cModel.getDblAttr(copt.DblAttr.LpObjVal);
+                System.out.println(String.format("【SDP-成功】%s  LpStatus=%d  ObjVal=%.6f", context, status, val));
+            } else {
+                System.out.println(String.format("【SDP-失败/非最优】%s  LpStatus=%d", context, status));
+            }
+        } catch (Exception e) {
+            System.out.println("【SDP-失败】" + context + "  无法读取求解状态: " + e.getMessage());
         }
     }
 

@@ -6,6 +6,27 @@
     "configurations": [
         {
             "type": "java",
+            "name": "HarderOutOfSampleEvaluator",
+            "request": "launch",
+            "mainClass": "HarderOutOfSampleEvaluator",
+            "projectName": "TDP-pre-4_31e54368"
+        },
+        {
+            "type": "java",
+            "name": "TotalWorkloadEvaluator",
+            "request": "launch",
+            "mainClass": "TotalWorkloadEvaluator",
+            "projectName": "TDP-pre-4_31e54368"
+        },
+        {
+            "type": "java",
+            "name": "GabrielGraphSmallInstanceGenerator",
+            "request": "launch",
+            "mainClass": "GabrielGraphSmallInstanceGenerator",
+            "projectName": "TDP-pre-4_31e54368"
+        },
+        {
+            "type": "java",
             "name": "DRTest1",
             "request": "launch",
             "mainClass": "DRTest1",

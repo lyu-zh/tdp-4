@@ -32,13 +32,13 @@ public class DRTest1 {
     public static void main(String[] args) throws Exception {
         // Experiment configuration
         double E = 50.0; // Expected value
-        double[] RSDValues = {0.125, 0.25}; // Relative standard deviation array
-        double[] rValues = {0.1}; // Tolerance parameter values
+        double[] RSDValues = {0.125, 0.25, 0.5}; // Relative standard deviation array
+        double[] rValues = {0.3, 0.2, 0.1}; // Tolerance parameter values
         double[] gammaValues = {0.4, 0.3, 0.2, 0.1}; // Chance constraint risk parameter
         int[] scenarioNumValues = {100}; // Number of scenarios
         boolean[] useD1Values = {false}; // Whether to use D_1 or D_2 ambiguity set
-        double[] delta1Values = {1, 2, 4}; // D_2 ambiguity set parameter delta1
-        double[] delta2Values = {2, 4, 8}; // D_2 ambiguity set parameter delta2
+        double[] delta1Values = {2}; // D_2 ambiguity set parameter delta1
+        double[] delta2Values = {4}; // D_2 ambiguity set parameter delta2
         boolean[] useJointChanceValues = {false}; // Whether to use joint chance constraint
         boolean[] useExactMethodValues = {false}; // Whether to use exact method or approximation
         boolean[] useImprovedModelValues = {false}; // Whether to use improved model (shortest path distance + workload constraint)
@@ -49,7 +49,7 @@ public class DRTest1 {
         long seed = 12345678; // Random seed
 
         long testSeed = seed + 1000;
-        int numTestScenarios = 100; // For standard model, number of test scenarios to generate
+        int numTestScenarios = 1000; // For standard model, number of test scenarios to generate
         int numTrainingScenarios = 100; // For assignment-dependent model, 已弃用（保留接口）；训练/OOS 目录见 syncAssignmentDependentDirsForRsd
 
         // Get start time for filename
@@ -121,7 +121,7 @@ public class DRTest1 {
                 for (File file : allFiles) {
                     String fileName = file.getName();
                     // 匹配GG20-和GG50-开头的文件
-                    if (fileName.startsWith("GG50-3")) {
+                    if (fileName.startsWith("GG50-5")) {
                         instanceFiles.add(file);
                         System.out.println("找到数据文件: " + fileName);
                     }

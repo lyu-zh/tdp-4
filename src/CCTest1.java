@@ -16,14 +16,14 @@ public class CCTest1 {
         double[] rValues = {0.5, 0.4, 0.3, 0.2, 0.1}; // Tolerance parameter values
         double[] gammaValues = {0.4, 0.3, 0.2, 0.1, 0.05, 0.04, 0.03, 0.02, 0.01}; // Chance constraint risk parameter
         // 原始 d_i 模式：每个元素为随机场景条数。d_ij+CSV 时场景数以训练目录下 CSV 个数为准，此处数组在 d_ij 下仅首项会触发一次真实实验（避免与 numScenarios 重复跑同一数据）。
-        int[] scenarioNumValues = {100};
+        int[] scenarioNumValues = {1000};
         boolean[] useScenarioGeneration = {true}; // Whether to use scenario generation
         /** 为 true 时使用 d_{ijs} 工作量与 T_s 相对平衡模型（与 DR 中 assignment-dependent 口径一致）；false 保持原 d_i 模型。 */
         boolean useDijWorkloadModel = false;
         long seed = 12345678; // Random seed
 
         long testSeed = seed + 1000;
-        int numTestScenarios = 100;
+        int numTestScenarios = 5000;
 
         // Get start time for filename
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd_HHmmss");
@@ -70,7 +70,7 @@ public class CCTest1 {
                     System.out.println("No .dat files found in ./Instances_new directory.");
                     return;
                 }
-                String[] targetPrefixes = {"GG20-", "GG50-"};
+                String[] targetPrefixes = {"GG20-2", "GG20-4"};
                 System.out.println("只处理文件名以以下前缀开头的实例文件:");
                 for (String prefix : targetPrefixes) {
                     System.out.println("  - " + prefix);
@@ -224,7 +224,7 @@ public class CCTest1 {
                                             : numScenarios;
 
                                     csvWriter.write(String.format(Locale.US,
-                                            "%s,%d,%d,%.3f,%.1f,%.1f,%d,%s,%s,%.3f,%.4f,%.4f,%d,%s,%s",
+                                            "%s,%d,%d,%.3f,%.1f,%.4f,%d,%s,%s,%.3f,%.4f,%.4f,%d,%s,%s",
                                             instanceName, numUnits, numRegions, RSD, r, gamma, scenariosReported,
                                             useScenario ? "true" : "false",
                                             useDijWorkloadModel ? "true" : "false",
@@ -288,7 +288,7 @@ public class CCTest1 {
             boolean useScenario,
             boolean useDijWorkload) throws IOException {
         csvWriter.write(String.format(Locale.US,
-                "%s,%d,%d,%.3f,%.1f,%.1f,%d,%s,%s,%.3f,%.4f,%.4f,%d,%s,%s",
+                "%s,%d,%d,%.3f,%.1f,%.4f,%d,%s,%s,%.3f,%.4f,%.4f,%d,%s,%s",
                 instanceName, numUnits, numRegions, rsd, r, gamma, numScenarios,
                 useScenario ? "true" : "false",
                 useDijWorkload ? "true" : "false",

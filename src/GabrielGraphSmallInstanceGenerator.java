@@ -9,7 +9,7 @@ public class GabrielGraphSmallInstanceGenerator {
     
     public static void main(String[] args) {
         // 创建输出目录
-        File outputDir = new File("Instances_test");
+        File outputDir = new File("Instances_new");
         if (!outputDir.exists()) {
             outputDir.mkdirs();
             System.out.println("创建目录: " + outputDir.getAbsolutePath());
@@ -17,9 +17,9 @@ public class GabrielGraphSmallInstanceGenerator {
         
         // 定义要生成的实例参数
         // 150点：中心点数 6 和 8
-        int[] nodeCounts = {20}; // 节点数量
+        int[] nodeCounts = {50}; // 节点数量
         int[][] districtCounts = {
-            {3}      // 对应 150 节点elsarticle-template-harv
+            {6, 7, 10}      // 对应 150 节点elsarticle-template-harv
         };
         
         System.out.println("开始批量生成 Gabriel Graph 小规模实例...");
@@ -48,7 +48,7 @@ public class GabrielGraphSmallInstanceGenerator {
                     generator.constructGabrielGraph();
                     
                     // 生成文件名，格式类似：GG20-3-1.dat, GG20-5-1.dat, ...
-                    String filename = String.format("Instances_test/GG%d-%d-%d.dat", numNodes, p, instanceCounter);
+                    String filename = String.format("Instances_new/GG%d-%d-%d.dat", numNodes, p, instanceCounter);
                     
                     // 写入文件（新格式：包含点数、区域数量、坐标、边）
                     generator.writeInstanceFile(filename, p);
