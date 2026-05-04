@@ -758,7 +758,7 @@ public class TSPDualExtractor {
             long startTime = System.currentTimeMillis();
             AtomicInteger completed = new AtomicInteger(0);
             // 【优化】总任务数：每个区域j只处理最近的5*n/k个点
-            int numPointsPerRegion = 5 * n / k;
+            int numPointsPerRegion = 2 * n / k;
             int total = numPointsPerRegion * k;
             
             // 使用 IntStream 并行处理
@@ -818,11 +818,11 @@ public class TSPDualExtractor {
                         int c = completed.incrementAndGet();
                         
                         // 【分析】记录最后200个任务，用于分析哪些区域和点最后完成
-                        if (c > total - 200) {
-                            String msg1 = String.format("[最后200任务] Region:%d, Point:%d, 进度:%d/%d%n", j, i, c, total);
-                            if (loggerFinal != null) loggerFinal.log(msg1);
-                            else System.out.print(msg1);
-                        }
+                        // if (c > total - 200) {
+                        //     String msg1 = String.format("[最后200任务] Region:%d, Point:%d, 进度:%d/%d%n", j, i, c, total);
+                        //     if (loggerFinal != null) loggerFinal.log(msg1);
+                        //     else System.out.print(msg1);
+                        // }
                         
                         try {
                             if (xiFinal != null && xiFinal[i] == 0 && i != centerIdx) {

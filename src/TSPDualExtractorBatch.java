@@ -13,6 +13,7 @@ public class TSPDualExtractorBatch {
     
     // 特殊值：用于标记不在5n/k范围内的点（在CSV中显示为"Null"）
     private static final double OUT_OF_RANGE_MARKER = Double.NEGATIVE_INFINITY;
+    private static final boolean WRITE_TEXT_LOGS = false;
     
     // 日期格式模式：yyyy-MM-dd
     private static final Pattern DATE_PATTERN = Pattern.compile("^\\d{4}-\\d{2}-\\d{2}$");
@@ -133,11 +134,13 @@ public class TSPDualExtractorBatch {
             if (!dir.exists()) {
                 dir.mkdirs();
             }
-            String logFile = outputDir + "/log_p" + k + "_" + dateSuffix + ".txt";
+            String logFile = WRITE_TEXT_LOGS
+                    ? outputDir + "/log_p" + k + "_" + dateSuffix + ".txt"
+                    : "disabled";
             
             // 创建日志记录器
             try {
-                logger = new Logger(logFile);
+                if (WRITE_TEXT_LOGS) logger = new Logger(logFile);
             } catch (IOException e) {
                 System.err.println("无法创建日志文件: " + logFile + "，将只输出到控制台");
             }
@@ -188,7 +191,7 @@ public class TSPDualExtractorBatch {
             else System.out.print(msg);
             
             // 调用 TSPDualExtractor 的核心计算逻辑（传入日志文件路径）
-            double[][] travelDist = TSPDualExtractor.computeTravelDist(allPoints, centers, distMatrix, xi, dateEnv, logFile);
+            double[][] travelDist = TSPDualExtractor.computeTravelDist(allPoints, centers, distMatrix, xi, dateEnv, null);
             
             // 保存结果
             saveTravelDistToCSV(travelDist, outputFile);
@@ -236,12 +239,18 @@ public class TSPDualExtractorBatch {
             System.out.println("将对 demand_matrix.csv 中的所有日期进行迭代计算\n");
             
             // 参数设置
-            String pointsFile = "data/test/selected_low_ratio_points_top20.csv";
-            String centersFile = "data/test/selected_centers_low_ratio_p3.csv";
-            String demandMatrixFile = "data/test/demand_matrix_low_ratio.csv";
+            String pointsFile = "data/filtered_top100_active800_lat_le_22_75/unique_coordinates_list.csv";
+            String centersFile = "data/filtered_top100_active800_lat_le_22_75/selected_centers_p3.csv";
+            String demandMatrixFile = "data/filtered_top100_active800_lat_le_22_75/demand_matrix.csv";
             
             // 创建输出目录
-            String outputDir = "output/travel_dist_dual_values_filtered_by_date_low_ratio";
+            String outputDir = "output/travel_dist_dual_values_filtered_top100_active800_lat_le_22_75_p3";
+            // String pointsFile = "data/test/cluster20_unit_outputs/unique_coordinates_list_cluster20_unit.csv";
+            // String centersFile = "data/test/cluster20_unit_outputs/selected_centers_test_p3.csv";
+            // String demandMatrixFile = "data/test/cluster20_unit_outputs/demand_matrix_cluster20_dates_filtered.csv";
+            
+            // // 创建输出目录
+            // String outputDir = "output/travel_dist_dual_values_filtered_by_date_low_ratio_cluster20_unit";
             File dir = new File(outputDir);
             if (!dir.exists()) {
                 dir.mkdirs();

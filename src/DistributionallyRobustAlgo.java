@@ -2690,6 +2690,7 @@ public class DistributionallyRobustAlgo {
             try {
                 copt.Envr env = getOrCreateD1SdpSharedEnvr();
                 cModel = env.createModel("d1_sdp_cert");
+                long buildStartTime = System.currentTimeMillis();
 
                 // 模型级别静默 + 稳健参数
                 try { cModel.setIntParam(copt.IntParam.Logging, 0); } catch (Exception ignored) {}
@@ -2796,7 +2797,12 @@ public class DistributionallyRobustAlgo {
                 lmi2.addTerm(lambda, constMinusVaug);
                 cModel.addLmiConstr(lmi2, "lmi_z_minus_e11_vaug_minus_n1_psd");
 
+                long solveStartTime = System.currentTimeMillis();
                 cModel.solve();
+                long solveEndTime = System.currentTimeMillis();
+                logCoptSdpTiming("D1-SDP单侧 attempt=" + attempt,
+                        solveStartTime - buildStartTime,
+                        solveEndTime - solveStartTime);
                 logCoptSdpSolveOutcome(cModel, "D1-SDP单侧 attempt=" + attempt);
 
                 int status = cModel.getIntAttr(copt.IntAttr.LpStatus);
@@ -2877,6 +2883,7 @@ public class DistributionallyRobustAlgo {
             try {
                 copt.Envr env = getOrCreateD1SdpSharedEnvr();
                 cModel = env.createModel("d1_sdp_cert_union");
+                long buildStartTime = System.currentTimeMillis();
 
                 try { cModel.setIntParam(copt.IntParam.Logging, 0); } catch (Exception ignored) {}
                 try { cModel.setIntParam(copt.IntParam.LogToConsole, 0); } catch (Exception ignored) {}
@@ -3005,7 +3012,12 @@ public class DistributionallyRobustAlgo {
                 lmi3.addTerm(lambdaU, constMinusVaugU);
                 cModel.addLmiConstr(lmi3, "lmi_union_z_minus_e11_vU_minus_n2_psd");
 
+                long solveStartTime = System.currentTimeMillis();
                 cModel.solve();
+                long solveEndTime = System.currentTimeMillis();
+                logCoptSdpTiming("D1-SDP并事件 attempt=" + attempt,
+                        solveStartTime - buildStartTime,
+                        solveEndTime - solveStartTime);
                 logCoptSdpSolveOutcome(cModel, "D1-SDP并事件 attempt=" + attempt);
 
                 int status = cModel.getIntAttr(copt.IntAttr.LpStatus);
@@ -3397,12 +3409,57 @@ public class DistributionallyRobustAlgo {
     }
 
     /**
+     * D2：用 COPT 原生二阶锥表示 {@code ||Sigma^{1/2}(y+2M mu)||_2 <= s}，
+     * 替代将 SOC 写成 (n+1) 阶 PSD 的 Schur 补 LMI，便于求解器走专用锥算法。
+     * 在 {@code s >= 0} 下与 {@code [s,w^T;w,sI] >= 0} 等价。
+     *
+     * @param namePrefix 变量/约束名前缀，避免单侧与并事件子问题重名
+     */
+    private void addD2SigmaHalfNormAsQuadCone(
+            copt.Model cModel,
+            int n,
+            copt.Var[] y,
+            copt.Var[][] mVar,
+            copt.Var s,
+            double[][] sigmaSqrt,
+            String namePrefix) throws copt.CoptException {
+        copt.Var[] w = new copt.Var[n];
+        for (int k = 0; k < n; k++) {
+            w[k] = cModel.addVar(-copt.Consts.INFINITY, copt.Consts.INFINITY, 0.0, copt.Consts.CONTINUOUS,
+                    namePrefix + "w_" + k);
+            copt.Expr wDef = new copt.Expr();
+            for (int i = 0; i < n; i++) {
+                double coeffY = sigmaSqrt[k][i];
+                if (Math.abs(coeffY) > 1e-12) {
+                    wDef.addTerm(y[i], coeffY);
+                }
+            }
+            for (int i = 0; i < n; i++) {
+                for (int t = 0; t < n; t++) {
+                    double coeffM = 2.0 * sigmaSqrt[k][i] * meanVector[t];
+                    if (Math.abs(coeffM) > 1e-12) {
+                        wDef.addTerm(mVar[i + 1][t + 1], coeffM);
+                    }
+                }
+            }
+            wDef.addTerm(w[k], -1.0);
+            cModel.addConstr(wDef, copt.Consts.EQUAL, 0.0, namePrefix + "w_def_" + k);
+        }
+        copt.VarArray coneVars = new copt.VarArray();
+        coneVars.pushBack(s);
+        for (int k = 0; k < n; k++) {
+            coneVars.pushBack(w[k]);
+        }
+        cModel.addCone(coneVars, copt.Consts.CONE_QUAD);
+    }
+
+    /**
      * 使用 COPT Java API 计算 D2 下单个线性事件的混合 SDP-SOCP 证书上界。
      *
      * 目标:
      * min y0 + mu^T y + (delta2*Sigma + mu*mu^T):M + sqrt(delta1)*s
      * s.t.
-     *      || Sigma^(1/2) (y + 2*M*mu) ||_2 <= s         （用 LMI 形式表示）
+     *      || Sigma^(1/2) (y + 2*M*mu) ||_2 <= s         （COPT 原生二阶锥）
      *      M >= 0 (PSD)
      *      Z - N0 >= 0
      *      Z - E11 - lambda*Vaug - N1 >= 0
@@ -3428,7 +3485,6 @@ public class DistributionallyRobustAlgo {
 
         final int n = v.length;
         final int dim = n + 1; // Z 的增广矩阵维度
-        final int socDim = n + 1; // SOC 的 LMI 维度
         final double sqrtDelta1 = Math.sqrt(Math.max(0.0, delta1));
         final double[][] sigmaSqrt = getD2SigmaSqrtForCurrentDimension(n);
 
@@ -3439,6 +3495,7 @@ public class DistributionallyRobustAlgo {
             try {
                 copt.Envr env = getOrCreateD2SdpSharedEnvr();
                 cModel = env.createModel("d2_sdp_socp_cert");
+                long buildStartTime = System.currentTimeMillis();
 
                 try { cModel.setIntParam(copt.IntParam.Logging, 0); } catch (Exception ignored) {}
                 try { cModel.setIntParam(copt.IntParam.LogToConsole, 0); } catch (Exception ignored) {}
@@ -3554,34 +3611,15 @@ public class DistributionallyRobustAlgo {
                 }
                 cModel.addLmiConstr(lmiMpsd, "d2_lmi_m_psd");
 
-                // SOC: || Sigma^(1/2) (y + 2*M*mu) ||_2 <= s
-                // 使用等价 LMI:
-                // [ s,  w^T ]
-                // [ w,  s I ] >= 0, 其中 w = Sigma^(1/2) (y + 2*M*mu)
-                copt.LmiExpr lmiSoc = new copt.LmiExpr();
-                lmiSoc.addTerm(s, createBasisSymMatrix(cModel, socDim, 0, 0, 1.0));
-                for (int k = 1; k < socDim; k++) {
-                    lmiSoc.addTerm(s, createBasisSymMatrix(cModel, socDim, k, k, 1.0));
-                }
-                for (int k = 0; k < n; k++) {
-                    for (int i = 0; i < n; i++) {
-                        double coeffY = sigmaSqrt[k][i];
-                        if (Math.abs(coeffY) > 1e-12) {
-                            lmiSoc.addTerm(y[i], createBasisSymMatrix(cModel, socDim, 0, k + 1, coeffY));
-                        }
-                    }
-                    for (int i = 0; i < n; i++) {
-                        for (int t = 0; t < n; t++) {
-                            double coeffM = 2.0 * sigmaSqrt[k][i] * meanVector[t];
-                            if (Math.abs(coeffM) > 1e-12) {
-                                lmiSoc.addTerm(mVar[i + 1][t + 1], createBasisSymMatrix(cModel, socDim, 0, k + 1, coeffM));
-                            }
-                        }
-                    }
-                }
-                cModel.addLmiConstr(lmiSoc, "d2_lmi_soc");
+                // SOC: || Sigma^(1/2) (y + 2*M*mu) ||_2 <= s — 用原生二阶锥，避免 (n+1) 阶 PSD 块
+                addD2SigmaHalfNormAsQuadCone(cModel, n, y, mVar, s, sigmaSqrt, "d2_soc_");
 
+                long solveStartTime = System.currentTimeMillis();
                 cModel.solve();
+                long solveEndTime = System.currentTimeMillis();
+                logCoptSdpTiming("D2-SDP-SOCP单侧 attempt=" + attempt,
+                        solveStartTime - buildStartTime,
+                        solveEndTime - solveStartTime);
                 logCoptSdpSolveOutcome(cModel, "D2-SDP-SOCP单侧 attempt=" + attempt);
 
                 int status = cModel.getIntAttr(copt.IntAttr.LpStatus);
@@ -3641,7 +3679,6 @@ public class DistributionallyRobustAlgo {
             throw new IllegalArgumentException("vL/vU 维度不一致");
         }
         final int dim = n + 1;
-        final int socDim = n + 1;
         final double sqrtDelta1 = Math.sqrt(Math.max(0.0, delta1));
         final double[][] sigmaSqrt = getD2SigmaSqrtForCurrentDimension(n);
 
@@ -3652,6 +3689,7 @@ public class DistributionallyRobustAlgo {
             try {
                 copt.Envr env = getOrCreateD2SdpSharedEnvr();
                 cModel = env.createModel("d2_sdp_soc_cert_union");
+                long buildStartTime = System.currentTimeMillis();
 
                 try { cModel.setIntParam(copt.IntParam.Logging, 0); } catch (Exception ignored) {}
                 try { cModel.setIntParam(copt.IntParam.LogToConsole, 0); } catch (Exception ignored) {}
@@ -3790,30 +3828,14 @@ public class DistributionallyRobustAlgo {
                 }
                 cModel.addLmiConstr(lmiMpsd, "d2_union_lmi_m_psd");
 
-                copt.LmiExpr lmiSoc = new copt.LmiExpr();
-                lmiSoc.addTerm(s, createBasisSymMatrix(cModel, socDim, 0, 0, 1.0));
-                for (int k = 1; k < socDim; k++) {
-                    lmiSoc.addTerm(s, createBasisSymMatrix(cModel, socDim, k, k, 1.0));
-                }
-                for (int k = 0; k < n; k++) {
-                    for (int i = 0; i < n; i++) {
-                        double coeffY = sigmaSqrt[k][i];
-                        if (Math.abs(coeffY) > 1e-12) {
-                            lmiSoc.addTerm(y[i], createBasisSymMatrix(cModel, socDim, 0, k + 1, coeffY));
-                        }
-                    }
-                    for (int i = 0; i < n; i++) {
-                        for (int t = 0; t < n; t++) {
-                            double coeffM = 2.0 * sigmaSqrt[k][i] * meanVector[t];
-                            if (Math.abs(coeffM) > 1e-12) {
-                                lmiSoc.addTerm(mVar[i + 1][t + 1], createBasisSymMatrix(cModel, socDim, 0, k + 1, coeffM));
-                            }
-                        }
-                    }
-                }
-                cModel.addLmiConstr(lmiSoc, "d2_union_lmi_soc");
+                addD2SigmaHalfNormAsQuadCone(cModel, n, y, mVar, s, sigmaSqrt, "d2_union_soc_");
 
+                long solveStartTime = System.currentTimeMillis();
                 cModel.solve();
+                long solveEndTime = System.currentTimeMillis();
+                logCoptSdpTiming("D2-SDP-SOCP并事件 attempt=" + attempt,
+                        solveStartTime - buildStartTime,
+                        solveEndTime - solveStartTime);
                 logCoptSdpSolveOutcome(cModel, "D2-SDP-SOCP并事件 attempt=" + attempt);
 
                 int status = cModel.getIntAttr(copt.IntAttr.LpStatus);
@@ -8572,6 +8594,20 @@ public class DistributionallyRobustAlgo {
         } catch (Exception e) {
             System.out.println("【SDP-失败】" + context + "  无法读取求解状态: " + e.getMessage());
         }
+    }
+
+    /**
+     * 打印 COPT SDP/SOCP 子问题的建模时间与求解时间，用于区分 Java 建模开销和求解器开销。
+     */
+    private void logCoptSdpTiming(String context, long buildTimeMs, long solveTimeMs) {
+        long totalTimeMs = buildTimeMs + solveTimeMs;
+        System.out.println(String.format(
+                "【SDP-计时】%s  buildTime=%.3fs  solveTime=%.3fs  total=%.3fs",
+                context,
+                buildTimeMs / 1000.0,
+                solveTimeMs / 1000.0,
+                totalTimeMs / 1000.0
+        ));
     }
 
     /**

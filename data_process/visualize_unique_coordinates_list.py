@@ -20,7 +20,7 @@ print("\n步骤1: 读取CSV文件...")
 print("-" * 80)
 
 # 使用相对于脚本目录的正确路径（向上返回到项目根目录）
-csv_file = os.path.join(script_dir, '..', 'data', 'test', 'unique_coordinates_list_filtered_new.csv')
+csv_file = os.path.join(script_dir, '..', 'data', 'filtered_top100_active800', 'unique_coordinates_list.csv')
 csv_file = os.path.normpath(csv_file)  # 规范化路径，处理 .. 和 . 符号
 
 if not os.path.exists(csv_file):
@@ -144,7 +144,7 @@ ax.text(0.02, 0.98, info_text, transform=ax.transAxes,
         bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5))
 
 # 保存图片
-output_file = 'pic/unique_coordinates_list_visualization_center.png'
+output_file = 'pic/unique_coordinates_list_visualization_center_100_active800.png'
 plt.tight_layout()
 plt.savefig(output_file, dpi=300, bbox_inches='tight')
 print(f"\n图表已保存为: {output_file}")
